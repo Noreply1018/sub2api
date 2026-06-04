@@ -19,7 +19,7 @@ git branch --show-current
 
 - `origin`: `https://github.com/Noreply1018/sub2api.git`
 - `upstream`: `https://github.com/Wei-Shaw/sub2api.git`
-- 本地开发分支：`dev/local-custom`
+- 本地开发分支：`local-custom`
 
 需要同步上游时：
 
