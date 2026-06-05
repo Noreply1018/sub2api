@@ -66,8 +66,16 @@
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
-          <div class="mt-1 flex items-center justify-between">
-            <span></span>
+          <div class="mt-2 flex items-center justify-between gap-3">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-dark-300">
+              <input
+                v-model="formData.remember_me"
+                type="checkbox"
+                :disabled="authActionDisabled"
+                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-600 dark:bg-dark-800"
+              />
+              <span>{{ t('auth.rememberMe') }}</span>
+            </label>
             <router-link
               v-if="passwordResetEnabled && !backendModeEnabled"
               to="/forgot-password"
@@ -265,7 +273,8 @@ const totpModalRef = ref<InstanceType<typeof TotpLoginModal> | null>(null)
 
 const formData = reactive({
   email: '',
-  password: ''
+  password: '',
+  remember_me: true
 })
 
 const errors = reactive({
@@ -480,6 +489,7 @@ async function handleLogin(): Promise<void> {
     const response = await authStore.login({
       email: formData.email,
       password: formData.password,
+      remember_me: formData.remember_me,
       turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined
     })
 
@@ -524,7 +534,7 @@ async function handle2FAVerify(code: string): Promise<void> {
   }
 
   try {
-    await authStore.login2FA(totpTempToken.value, code)
+    await authStore.login2FA(totpTempToken.value, code, formData.remember_me)
 
     // Close modal and show success
     show2FAModal.value = false

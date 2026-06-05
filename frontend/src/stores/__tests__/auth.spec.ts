@@ -123,6 +123,19 @@ describe('useAuthStore', () => {
       })
     })
 
+    it('2FA 验证时传递 remember_me 选项', async () => {
+      mockLogin2FA.mockResolvedValue(fakeAuthResponse)
+      const store = useAuthStore()
+
+      await store.login2FA('temp-123', '654321', true)
+
+      expect(mockLogin2FA).toHaveBeenCalledWith({
+        temp_token: 'temp-123',
+        totp_code: '654321',
+        remember_me: true,
+      })
+    })
+
     it('2FA 验证失败时清除状态并抛出错误', async () => {
       mockLogin2FA.mockRejectedValue(new Error('Invalid TOTP'))
       const store = useAuthStore()

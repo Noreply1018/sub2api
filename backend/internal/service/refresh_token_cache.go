@@ -17,6 +17,7 @@ type RefreshTokenData struct {
 	FamilyID     string    `json:"family_id"`     // Token家族ID，用于防重放攻击
 	CreatedAt    time.Time `json:"created_at"`
 	ExpiresAt    time.Time `json:"expires_at"`
+	RememberMe   *bool     `json:"remember_me,omitempty"` // nil 表示旧会话，按长会话兼容处理
 }
 
 // RefreshTokenCache 管理Refresh Token的Redis缓存

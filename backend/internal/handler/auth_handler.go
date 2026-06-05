@@ -74,6 +74,7 @@ type LoginRequest struct {
 	Email          string `json:"email" binding:"required,email"`
 	Password       string `json:"password" binding:"required"`
 	TurnstileToken string `json:"turnstile_token"`
+	RememberMe     bool   `json:"remember_me"`
 }
 
 // AuthResponse 认证响应格式（匹配前端期望）
@@ -98,12 +99,16 @@ func ensureLoginUserActive(user *service.User) error {
 // respondWithTokenPair 生成 Token 对并返回认证响应
 // 如果 Token 对生成失败，回退到只返回 Access Token（向后兼容）
 func (h *AuthHandler) respondWithTokenPair(c *gin.Context, user *service.User) {
+	h.respondWithTokenPairWithRememberMe(c, user, true)
+}
+
+func (h *AuthHandler) respondWithTokenPairWithRememberMe(c *gin.Context, user *service.User, rememberMe bool) {
 	if err := ensureLoginUserActive(user); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
 
-	tokenPair, err := h.authService.GenerateTokenPair(c.Request.Context(), user, "")
+	tokenPair, err := h.authService.GenerateTokenPairWithRememberMe(c.Request.Context(), user, "", rememberMe)
 	if err != nil {
 		slog.Error("failed to generate token pair", "error", err, "user_id", user.ID)
 		// 回退到只返回Access Token
@@ -261,7 +266,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	h.authService.RecordSuccessfulLogin(c.Request.Context(), user.ID)
 
-	h.respondWithTokenPair(c, user)
+	h.respondWithTokenPairWithRememberMe(c, user, req.RememberMe)
 }
 
 // TotpLoginResponse represents the response when 2FA is required
@@ -273,8 +278,9 @@ type TotpLoginResponse struct {
 
 // Login2FARequest represents the 2FA login request
 type Login2FARequest struct {
-	TempToken string `json:"temp_token" binding:"required"`
-	TotpCode  string `json:"totp_code" binding:"required,len=6"`
+	TempToken  string `json:"temp_token" binding:"required"`
+	TotpCode   string `json:"totp_code" binding:"required,len=6"`
+	RememberMe bool   `json:"remember_me"`
 }
 
 // Login2FA completes the login with 2FA verification
@@ -397,7 +403,7 @@ func (h *AuthHandler) Login2FA(c *gin.Context) {
 		h.authService.RecordSuccessfulLogin(c.Request.Context(), user.ID)
 	}
 
-	h.respondWithTokenPair(c, user)
+	h.respondWithTokenPairWithRememberMe(c, user, req.RememberMe)
 }
 
 // GetCurrentUser handles getting current authenticated user

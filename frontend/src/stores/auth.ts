@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import { authAPI, isTotp2FARequired, type LoginResponse } from '@/api'
-import type { User, LoginRequest, RegisterRequest, AuthResponse } from '@/types'
+import type { User, LoginRequest, RegisterRequest, AuthResponse, TotpLogin2FARequest } from '@/types'
 
 const AUTH_TOKEN_KEY = 'auth_token'
 const AUTH_USER_KEY = 'auth_user'
@@ -264,9 +264,16 @@ export const useAuthStore = defineStore('auth', () => {
    * @returns Promise resolving to the authenticated user
    * @throws Error if 2FA verification fails
    */
-  async function login2FA(tempToken: string, totpCode: string): Promise<User> {
+  async function login2FA(tempToken: string, totpCode: string, rememberMe?: boolean): Promise<User> {
     try {
-      const response = await authAPI.login2FA({ temp_token: tempToken, totp_code: totpCode })
+      const request: TotpLogin2FARequest = {
+        temp_token: tempToken,
+        totp_code: totpCode
+      }
+      if (rememberMe !== undefined) {
+        request.remember_me = rememberMe
+      }
+      const response = await authAPI.login2FA(request)
       setAuthFromResponse(response)
       return user.value!
     } catch (error) {

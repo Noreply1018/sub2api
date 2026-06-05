@@ -1217,6 +1217,8 @@ type JWTConfig struct {
 	AccessTokenExpireMinutes int `mapstructure:"access_token_expire_minutes"`
 	// RefreshTokenExpireDays: Refresh Token有效期（天），默认30天
 	RefreshTokenExpireDays int `mapstructure:"refresh_token_expire_days"`
+	// SessionRefreshTokenExpireHours: 未勾选“记住我”时的 Refresh Token 有效期（小时）
+	SessionRefreshTokenExpireHours int `mapstructure:"session_refresh_token_expire_hours"`
 	// RefreshWindowMinutes: 刷新窗口（分钟），在Access Token过期前多久开始允许刷新
 	RefreshWindowMinutes int `mapstructure:"refresh_window_minutes"`
 }
@@ -1709,7 +1711,8 @@ func setDefaults() {
 	viper.SetDefault("jwt.expire_hour", 24)
 	viper.SetDefault("jwt.access_token_expire_minutes", 0) // 0 表示回退到 expire_hour
 	viper.SetDefault("jwt.refresh_token_expire_days", 30)  // 30天Refresh Token有效期
-	viper.SetDefault("jwt.refresh_window_minutes", 2)      // 过期前2分钟开始允许刷新
+	viper.SetDefault("jwt.session_refresh_token_expire_hours", 24)
+	viper.SetDefault("jwt.refresh_window_minutes", 2) // 过期前2分钟开始允许刷新
 
 	// TOTP
 	viper.SetDefault("totp.encryption_key", "")
@@ -2057,8 +2060,14 @@ func (c *Config) Validate() error {
 	if c.JWT.RefreshTokenExpireDays <= 0 {
 		return fmt.Errorf("jwt.refresh_token_expire_days must be positive")
 	}
+	if c.JWT.SessionRefreshTokenExpireHours <= 0 {
+		return fmt.Errorf("jwt.session_refresh_token_expire_hours must be positive")
+	}
 	if c.JWT.RefreshTokenExpireDays > 90 {
 		slog.Warn("jwt.refresh_token_expire_days is high; consider shorter expiration for security", "refresh_token_expire_days", c.JWT.RefreshTokenExpireDays)
+	}
+	if c.JWT.SessionRefreshTokenExpireHours > 168 {
+		slog.Warn("jwt.session_refresh_token_expire_hours is high; consider shorter expiration for non-remembered sessions", "session_refresh_token_expire_hours", c.JWT.SessionRefreshTokenExpireHours)
 	}
 	if c.JWT.RefreshWindowMinutes < 0 {
 		return fmt.Errorf("jwt.refresh_window_minutes must be non-negative")

@@ -1402,9 +1402,22 @@ type TokenPairWithUser struct {
 	UserRole string
 }
 
+func (s *AuthService) refreshTokenTTL(rememberMe bool) time.Duration {
+	if rememberMe {
+		return time.Duration(s.cfg.JWT.RefreshTokenExpireDays) * 24 * time.Hour
+	}
+	return time.Duration(s.cfg.JWT.SessionRefreshTokenExpireHours) * time.Hour
+}
+
 // GenerateTokenPair 生成Access Token和Refresh Token对
 // familyID: 可选的Token家族ID，用于Token轮转时保持家族关系
 func (s *AuthService) GenerateTokenPair(ctx context.Context, user *User, familyID string) (*TokenPair, error) {
+	return s.GenerateTokenPairWithRememberMe(ctx, user, familyID, true)
+}
+
+// GenerateTokenPairWithRememberMe 生成Access Token和Refresh Token对。
+// rememberMe=false 使用较短的 Refresh Token 会话；rememberMe=true 使用长期会话。
+func (s *AuthService) GenerateTokenPairWithRememberMe(ctx context.Context, user *User, familyID string, rememberMe bool) (*TokenPair, error) {
 	// 检查 refreshTokenCache 是否可用
 	if s.refreshTokenCache == nil {
 		return nil, errors.New("refresh token cache not configured")
@@ -1417,7 +1430,7 @@ func (s *AuthService) GenerateTokenPair(ctx context.Context, user *User, familyI
 	}
 
 	// 生成Refresh Token
-	refreshToken, err := s.generateRefreshToken(ctx, user, familyID)
+	refreshToken, err := s.generateRefreshToken(ctx, user, familyID, rememberMe)
 	if err != nil {
 		return nil, fmt.Errorf("generate refresh token: %w", err)
 	}
@@ -1430,7 +1443,7 @@ func (s *AuthService) GenerateTokenPair(ctx context.Context, user *User, familyI
 }
 
 // generateRefreshToken 生成并存储Refresh Token
-func (s *AuthService) generateRefreshToken(ctx context.Context, user *User, familyID string) (string, error) {
+func (s *AuthService) generateRefreshToken(ctx context.Context, user *User, familyID string, rememberMe bool) (string, error) {
 	// 生成随机Token
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
@@ -1451,7 +1464,8 @@ func (s *AuthService) generateRefreshToken(ctx context.Context, user *User, fami
 	}
 
 	now := time.Now()
-	ttl := time.Duration(s.cfg.JWT.RefreshTokenExpireDays) * 24 * time.Hour
+	ttl := s.refreshTokenTTL(rememberMe)
+	rememberMeValue := rememberMe
 
 	data := &RefreshTokenData{
 		UserID:       user.ID,
@@ -1459,6 +1473,7 @@ func (s *AuthService) generateRefreshToken(ctx context.Context, user *User, fami
 		FamilyID:     familyID,
 		CreatedAt:    now,
 		ExpiresAt:    now.Add(ttl),
+		RememberMe:   &rememberMeValue,
 	}
 
 	// 存储Token数据
@@ -1548,7 +1563,11 @@ func (s *AuthService) RefreshTokenPair(ctx context.Context, refreshToken string)
 	}
 
 	// 生成新的Token对，保持同一个家族ID
-	pair, err := s.GenerateTokenPair(ctx, user, data.FamilyID)
+	rememberMe := true
+	if data.RememberMe != nil {
+		rememberMe = *data.RememberMe
+	}
+	pair, err := s.GenerateTokenPairWithRememberMe(ctx, user, data.FamilyID, rememberMe)
 	if err != nil {
 		return nil, err
 	}

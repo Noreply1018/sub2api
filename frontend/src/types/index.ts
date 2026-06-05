@@ -114,6 +114,7 @@ export interface LoginRequest {
   email: string
   password: string
   turnstile_token?: string
+  remember_me?: boolean
 }
 
 export interface RegisterRequest {
@@ -1827,6 +1828,7 @@ export interface TotpLoginResponse {
 export interface TotpLogin2FARequest {
   temp_token: string
   totp_code: string
+  remember_me?: boolean
 }
 
 // ==================== Scheduled Test Types ====================
