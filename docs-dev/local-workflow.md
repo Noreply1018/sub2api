@@ -24,48 +24,46 @@ git remote -v
 git branch -vv
 ```
 
-## 分支习惯
+## 分支习惯和提交类型
 
-`local-custom` 作为本 fork 的长期本地开发基线，用来承接上游同步、稳定的本地文档和已经确认可用的二开结果。不要直接在 `local-custom` 上开始具体功能开发。
+`local-custom` 是本 fork 的默认本地工作分支，用来承接上游同步、本地文档和后续二开改动。当前按个人二开方式维护，默认直接在 `local-custom` 上修改、验证、提交并推送。
 
-每次开始一个明确任务时，先从 `local-custom` 切短分支：
+开始改动前先确认分支和远端状态：
 
 ```bash
 cd ~/projects/sub2api
 git checkout local-custom
 git pull --ff-only origin local-custom
-git checkout -b feat/<topic>
 ```
 
-分支命名按改动类型选择：
-
-- `feat/<topic>`：新增或调整业务功能。
-- `fix/<topic>`：修复问题。
-- `docs/<topic>`：只改文档。
-- `chore/<topic>`：工具、配置或流程维护。
-
-任务完成后，在短分支上验证、提交并推送：
+改完后检查、提交并推送：
 
 ```bash
 git status --short
 git add <files>
 git commit -m "<type>: <summary>"
-git push -u origin <branch>
-```
-
-确认功能可用后，再合回 `local-custom`：
-
-```bash
-git checkout local-custom
-git merge --ff-only <branch>
 git push origin local-custom
 ```
 
-如果短分支已经落后于 `local-custom`，先在短分支上 rebase：
+`<type>` 是提交信息里的改动类型，不是必须开的分支名：
+
+- `feat`：feature，新增或调整功能。
+- `fix`：修复 bug。
+- `docs`：只改文档。
+- `chore`：工具、配置或流程维护。
+
+示例：
 
 ```bash
-git checkout <branch>
-git rebase local-custom
+git commit -m "docs: update local workflow"
+git commit -m "fix: handle empty token"
+git commit -m "feat: add local account note"
+```
+
+只有在用户明确要求，或者改动风险较高且已经先确认时，才额外创建短分支：
+
+```bash
+git checkout -b feat/<topic>
 ```
 
 ## 两套本地运行环境
