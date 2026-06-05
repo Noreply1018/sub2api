@@ -1,3 +1,0 @@
-- 使用中文回复用户，并使用中文编写文档。
-- 当仓库改动来自 Codex 自己时，完成验证后应自觉执行 git 提交；不要提交用户已有或无关改动。
-- 默认直接在 `local-custom` 上进行本地文档和二开改动，完成验证后提交并推送；提交信息使用 `<type>: <summary>` 格式，例如 `docs: update local workflow`、`fix: handle empty token`、`feat: add local note`。
