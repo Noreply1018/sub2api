@@ -3098,7 +3098,7 @@ export default {
         schedulable: 'Schedulable',
         todayStats: 'Today Stats',
         groups: 'Groups',
-        usageWindows: 'Usage Windows',
+        usageWindows: 'Remaining Quota',
         proxy: 'Proxy',
         lastUsed: 'Last Used',
         createdAt: 'Created',

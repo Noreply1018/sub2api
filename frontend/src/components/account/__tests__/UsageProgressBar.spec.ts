@@ -66,4 +66,30 @@ describe('UsageProgressBar', () => {
     expect(wrapper.text()).toContain('2h 30m')
     expect(wrapper.text()).not.toContain('现在')
   })
+
+  it('按剩余额度反向显示百分比和进度条', () => {
+    const wrapper = mount(UsageProgressBar, {
+      props: {
+        label: '5h',
+        utilization: 25,
+        color: 'indigo'
+      }
+    })
+
+    expect(wrapper.text()).toContain('75%')
+    expect(wrapper.find('[style="width: 75%;"]').exists()).toBe(true)
+  })
+
+  it('已用率达到或超过 100% 时显示剩余 0%', () => {
+    const wrapper = mount(UsageProgressBar, {
+      props: {
+        label: '5h',
+        utilization: 125,
+        color: 'indigo'
+      }
+    })
+
+    expect(wrapper.text()).toContain('0%')
+    expect(wrapper.find('.bg-red-500').exists()).toBe(true)
+  })
 })

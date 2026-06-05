@@ -107,37 +107,40 @@ const labelClass = computed(() => {
   return colors[props.color]
 })
 
-// Progress bar color based on utilization
+const remainingPercent = computed(() => {
+  return Math.max(0, 100 - props.utilization)
+})
+
+// Progress bar color based on remaining quota
 const barClass = computed(() => {
-  if (props.utilization >= 100) {
+  if (remainingPercent.value <= 0) {
     return 'bg-red-500'
-  } else if (props.utilization >= 80) {
+  } else if (remainingPercent.value <= 20) {
     return 'bg-amber-500'
   } else {
     return 'bg-green-500'
   }
 })
 
-// Text color based on utilization
+// Text color based on remaining quota
 const textClass = computed(() => {
-  if (props.utilization >= 100) {
+  if (remainingPercent.value <= 0) {
     return 'text-red-600 dark:text-red-400'
-  } else if (props.utilization >= 80) {
+  } else if (remainingPercent.value <= 20) {
     return 'text-amber-600 dark:text-amber-400'
   } else {
     return 'text-gray-600 dark:text-gray-400'
   }
 })
 
-// Bar width (capped at 100%)
+// Bar width represents remaining quota, not consumed utilization.
 const barWidth = computed(() => {
-  return `${Math.min(props.utilization, 100)}%`
+  return `${remainingPercent.value}%`
 })
 
-// Display percentage (cap at 999% for readability)
+// Display remaining percentage.
 const displayPercent = computed(() => {
-  const percent = Math.round(props.utilization)
-  return percent > 999 ? '>999%' : `${percent}%`
+  return `${Math.round(remainingPercent.value)}%`
 })
 
 const shouldShowResetTime = computed(() => {
