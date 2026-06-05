@@ -1,3 +1,3 @@
 - 使用中文回复用户，并使用中文编写文档。
 - 当仓库改动来自 Codex 自己时，完成验证后应自觉执行 git 提交；不要提交用户已有或无关改动。
-- 分支习惯：默认直接在 `local-custom` 上进行本地文档和二开改动，完成验证后提交并推送；除非用户明确要求，或改动风险很高且已先和用户确认，否则不要主动创建额外功能分支。
+- 默认直接在 `local-custom` 上进行本地文档和二开改动，完成验证后提交并推送；提交信息使用 `<type>: <summary>` 格式，例如 `docs: update local workflow`、`fix: handle empty token`、`feat: add local note`。
