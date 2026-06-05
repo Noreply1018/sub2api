@@ -24,6 +24,64 @@ git remote -v
 git branch -vv
 ```
 
+## 两套本地运行环境
+
+当前本机保留两套环境：
+
+| 用途 | 路径 | 访问地址 | Docker Desktop 组名 | 说明 |
+| --- | --- | --- | --- | --- |
+| 日常使用版 | `~/apps/sub2api` | `http://127.0.0.1:8080` | `sub2api` | 使用发布镜像和独立数据卷，保持稳定可用 |
+| 开发调试版 | `~/projects/sub2api` | `http://127.0.0.1:8081` | `deploy` | 从本地源码构建，适合二次开发和调试 |
+
+这样做的目的是让日常使用不受开发改动影响。开发版可以随时重建、改代码、清数据；日常版只在需要升级或迁移时处理。
+
+## 日常使用版
+
+日常使用版位于：
+
+```bash
+~/apps/sub2api
+```
+
+它使用 `docker-compose.yml`、`.env`、`postgres_data/`、`redis_data/` 和 `data/` 组成一个独立运行环境。这个目录不属于仓库，里面的 `.env` 包含本地密钥，不应提交到 git。
+
+访问：
+
+```text
+http://127.0.0.1:8080
+```
+
+本地管理员账号：
+
+```text
+email: admin@sub2api.local
+password: admin123456
+```
+
+健康检查：
+
+```bash
+curl http://127.0.0.1:8080/health
+```
+
+预期响应：
+
+```json
+{"status":"ok"}
+```
+
+常用命令：
+
+```bash
+cd ~/apps/sub2api
+docker compose ps
+docker compose logs -f sub2api
+docker compose restart sub2api
+docker compose down
+```
+
+也可以在 Docker Desktop GUI 中操作：找到名为 `sub2api` 的 Compose 组，点击启动或停止整个组。不要只启动单个应用容器，因为它还依赖 PostgreSQL 和 Redis。
+
 ## Docker 开发模式
 
 开发 compose 会从本地源码构建应用，并启动 PostgreSQL 和 Redis：
@@ -33,7 +91,7 @@ cd ~/projects/sub2api/deploy
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
-本机使用 `SERVER_PORT=8081`，因为 `127.0.0.1:8080` 已被其他本地容器占用。
+本机开发版使用 `SERVER_PORT=8081`，避免和日常使用版的 `127.0.0.1:8080` 冲突。
 
 访问：
 
@@ -41,7 +99,7 @@ docker compose -f docker-compose.dev.yml up --build -d
 http://127.0.0.1:8081
 ```
 
-本地管理员账号：
+开发版使用同一组本地管理员账号：
 
 ```text
 email: admin@sub2api.local

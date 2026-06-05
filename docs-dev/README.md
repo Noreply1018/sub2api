@@ -15,8 +15,9 @@
 - 仓库路径：`~/projects/sub2api`
 - 本地分支：`local-custom`
 - 远端分支：`origin/local-custom`
-- 本地访问地址：`http://127.0.0.1:8081`
-- Docker compose：`deploy/docker-compose.dev.yml`
+- 日常使用版：`http://127.0.0.1:8080`，路径 `~/apps/sub2api`，Docker Desktop 组名 `sub2api`
+- 开发调试版：`http://127.0.0.1:8081`，路径 `~/projects/sub2api`，Docker Desktop 组名 `deploy`
+- 开发 compose：`deploy/docker-compose.dev.yml`
 
 ## 常见二开入口
 

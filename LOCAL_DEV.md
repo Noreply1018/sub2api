@@ -10,14 +10,18 @@
 - [网关请求流](./docs-dev/request-flow.md)
 - [核心数据模型](./docs-dev/data-models.md)
 
-当前本地服务地址：
+当前本地服务地址分为两套：
 
 ```text
-http://127.0.0.1:8081
+日常使用版：http://127.0.0.1:8080
+开发调试版：http://127.0.0.1:8081
 ```
 
 快速健康检查：
 
 ```bash
+curl http://127.0.0.1:8080/health
 curl http://127.0.0.1:8081/health
 ```
+
+日常使用版位于 `~/apps/sub2api`，使用 Docker Desktop 中的 `sub2api` Compose 组；开发调试版位于 `~/projects/sub2api`，使用 Docker Desktop 中的 `deploy` Compose 组。
