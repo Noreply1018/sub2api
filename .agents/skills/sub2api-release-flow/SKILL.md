@@ -7,7 +7,7 @@ description: Use for this sub2api fork when promoting validated changes from the
 
 ## Overview
 
-Use this skill to move code and feature changes from the local debug deployment to the formal deployment without overwriting production data. Treat 8081 as the disposable validation surface and 8080 as the persistent service.
+Use this skill to move code and feature changes from the local debug deployment to the formal deployment without overwriting production data. Treat 8081 as the disposable validation surface and 8080 as the persistent service. For development validation, only rebuild or restart the 8081 deployment unless the user explicitly asks to promote to 8080.
 
 ## Environment Map
 
@@ -57,6 +57,24 @@ If a schema migration is required, apply the migration to the production databas
 8. Recreate or restart only the production app container unless a migration requires database coordination.
 9. Verify `8080` health, logs, image identity, and representative data counts.
 10. Commit repository changes after verification when changes were made by Codex.
+
+## Personal/Simple UI Validation
+
+For personal/simple mode frontend work, especially hiding billing, balance, recharge, rate, quota, or permission-gated UI semantics:
+
+- Do not rely only on source diff, typecheck, unit tests, or frontend build.
+- Confirm the runtime configuration chain on `8081`, including `/api/v1/settings/public` and the expected `run_mode`.
+- Use a real browser against `http://127.0.0.1:8081`, save screenshots, and assert visible text from `document.body.innerText`.
+- Required checks for personal usage UI: `/admin/usage` and `/usage` must still show Token information, and must not show `总消费`, `Total Cost`, `$`, `Billing Control`, or `计费管理`.
+- Prefer the fixed local script when applicable:
+
+```bash
+node tools/visual_check_personal_usage.mjs
+```
+
+The script defaults to `http://127.0.0.1:8081` and `admin@sub2api.local` / `admin123456`. Override with `SUB2API_BASE_URL`, `SUB2API_ADMIN_EMAIL`, `SUB2API_ADMIN_PASSWORD`, `SUB2API_USER_EMAIL`, `SUB2API_USER_PASSWORD`, `SUB2API_SCREENSHOT_DIR`, or `CHROME_BIN` when needed.
+
+Do not mark a backlog item `done` until the user has explicitly accepted it. Before that, keep it as `doing` or `review`.
 
 ## Useful Commands
 
