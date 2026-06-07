@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sub2API Release Flow"
+  short_description: "Safely promote 8081 changes to 8080"
+  default_prompt: "Use $sub2api-release-flow to promote a validated 8081 change to the 8080 production instance without overwriting production data."
