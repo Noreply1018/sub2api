@@ -268,6 +268,7 @@
               :stats="todayStatsByAccountId[String(row.id)] ?? null"
               :loading="todayStatsLoading"
               :error="todayStatsError"
+              :hide-billing-ui="authStore.hidesBillingUi"
             />
           </template>
           <template #cell-groups="{ row }">

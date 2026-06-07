@@ -3095,12 +3095,14 @@ const columns = computed<Column[]>(() => {
       label: t("admin.groups.columns.platform"),
       sortable: true,
     },
-    {
+  ];
+  if (!authStore.hidesBillingUi) {
+    cols.push({
       key: "billing_type",
       label: t("admin.groups.columns.billingType"),
       sortable: true,
-    },
-  ];
+    });
+  }
   if (!authStore.hidesBillingUi) {
     cols.push({
       key: "rate_multiplier",
@@ -3124,7 +3126,7 @@ const columns = computed<Column[]>(() => {
       label: t("admin.groups.columns.capacity"),
       sortable: false,
     },
-    { key: "usage", label: t("admin.groups.columns.usage"), sortable: false },
+    ...(authStore.hidesBillingUi ? [] : [{ key: "usage", label: t("admin.groups.columns.usage"), sortable: false }]),
     { key: "status", label: t("admin.groups.columns.status"), sortable: true },
     { key: "actions", label: t("admin.groups.columns.actions"), sortable: false },
   );

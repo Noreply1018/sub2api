@@ -12,11 +12,11 @@
         <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800">
           {{ formatTokens }}
         </span>
-        <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
+        <span v-if="!hideBillingUi" class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
           A ${{ formatAccountCost }}
         </span>
         <span
-          v-if="windowStats?.user_cost != null"
+          v-if="windowStats?.user_cost != null && !hideBillingUi"
           class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
           :title="t('usage.userBilled')"
         >
@@ -69,7 +69,10 @@ const props = defineProps<{
   color: 'indigo' | 'emerald' | 'purple' | 'amber'
   windowStats?: WindowStats | null
   showNowWhenIdle?: boolean
+  hideBillingUi?: boolean
 }>()
+
+const hideBillingUi = computed(() => props.hideBillingUi === true)
 
 const { t } = useI18n()
 

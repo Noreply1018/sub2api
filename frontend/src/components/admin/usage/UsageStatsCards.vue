@@ -1,6 +1,6 @@
 <template>
-  <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-    <div class="card p-4 flex items-center gap-3">
+  <div class="grid grid-cols-2 gap-4" :class="hideBillingUi ? 'lg:grid-cols-3' : 'lg:grid-cols-4'">
+    <div v-if="!hideBillingUi" class="card p-4 flex items-center gap-3">
       <div class="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30 text-blue-600">
         <Icon name="document" size="md" />
       </div>
@@ -47,11 +47,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AdminUsageStatsResponse } from '@/api/admin/usage'
 import Icon from '@/components/icons/Icon.vue'
 
-defineProps<{ stats: AdminUsageStatsResponse | null }>()
+const props = defineProps<{
+  stats: AdminUsageStatsResponse | null
+  hideBillingUi?: boolean
+}>()
+
+const hideBillingUi = computed(() => props.hideBillingUi === true)
 
 const { t } = useI18n()
 

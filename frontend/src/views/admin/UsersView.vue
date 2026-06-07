@@ -662,10 +662,11 @@
                 {{ t('admin.users.groups') }}
               </button>
 
-              <div class="my-1 border-t border-gray-100 dark:border-dark-700"></div>
+              <div v-if="!authStore.hidesBillingUi" class="my-1 border-t border-gray-100 dark:border-dark-700"></div>
 
               <!-- Deposit -->
               <button
+                v-if="!authStore.hidesBillingUi"
                 @click="handleDeposit(user); closeActionMenu()"
                 class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
               >
@@ -675,6 +676,7 @@
 
               <!-- Withdraw -->
               <button
+                v-if="!authStore.hidesBillingUi"
                 @click="handleWithdraw(user); closeActionMenu()"
                 class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
               >
@@ -695,6 +697,7 @@
 
               <!-- Balance History -->
               <button
+                v-if="!authStore.hidesBillingUi"
                 @click="handleBalanceHistory(user); closeActionMenu()"
                 class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
               >
@@ -741,6 +744,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
 import { formatDateTime } from '@/utils/format'
 import Icon from '@/components/icons/Icon.vue'
@@ -774,6 +778,7 @@ import UserBalanceHistoryModal from '@/components/admin/user/UserBalanceHistoryM
 import GroupReplaceModal from '@/components/admin/user/GroupReplaceModal.vue'
 
 const appStore = useAppStore()
+const authStore = useAuthStore()
 
 // Generate dynamic attribute columns from enabled definitions
 const attributeColumns = computed<Column[]>(() =>
@@ -822,30 +827,38 @@ const getAttributeValue = (userId: number, attrId: number): string => {
 }
 
 // All possible columns (for column settings)
-const allColumns = computed<Column[]>(() => [
-  { key: 'email', label: t('admin.users.columns.user'), sortable: true },
-  { key: 'id', label: t('admin.users.columns.id'), sortable: true },
-  { key: 'username', label: t('admin.users.columns.username'), sortable: true },
-  { key: 'notes', label: t('admin.users.columns.notes'), sortable: false },
-  // Dynamic attribute columns
-  ...attributeColumns.value,
-  { key: 'role', label: t('admin.users.columns.role'), sortable: true },
-  { key: 'groups', label: t('admin.users.columns.groups'), sortable: false },
-  { key: 'subscriptions', label: t('admin.users.columns.subscriptions'), sortable: false },
-  { key: 'balance', label: t('admin.users.columns.balance'), sortable: true },
-  { key: 'balance_platform_quota', label: t('admin.users.columns.balancePlatformQuota'), sortable: false },
-  { key: 'usage', label: t('admin.users.columns.usage'), sortable: false },
-  { key: 'usage_anthropic', label: t('admin.users.columns.usageAnthropic'), sortable: false },
-  { key: 'usage_openai', label: t('admin.users.columns.usageOpenAI'), sortable: false },
-  { key: 'usage_gemini', label: t('admin.users.columns.usageGemini'), sortable: false },
-  { key: 'usage_antigravity', label: t('admin.users.columns.usageAntigravity'), sortable: false },
-  { key: 'concurrency', label: t('admin.users.columns.concurrency'), sortable: true },
-  { key: 'status', label: t('admin.users.columns.status'), sortable: true },
-  { key: 'last_active_at', label: t('admin.users.columns.lastActive'), sortable: true },
-  { key: 'last_used_at', label: t('admin.users.columns.lastUsed'), sortable: true },
-  { key: 'created_at', label: t('admin.users.columns.created'), sortable: true },
-  { key: 'actions', label: t('admin.users.columns.actions'), sortable: false }
-])
+const allColumns = computed<Column[]>(() => {
+  const cols: Column[] = [
+    { key: 'email', label: t('admin.users.columns.user'), sortable: true },
+    { key: 'id', label: t('admin.users.columns.id'), sortable: true },
+    { key: 'username', label: t('admin.users.columns.username'), sortable: true },
+    { key: 'notes', label: t('admin.users.columns.notes'), sortable: false },
+    ...attributeColumns.value,
+    { key: 'role', label: t('admin.users.columns.role'), sortable: true },
+    { key: 'groups', label: t('admin.users.columns.groups'), sortable: false },
+    { key: 'subscriptions', label: t('admin.users.columns.subscriptions'), sortable: false },
+  ]
+  if (!authStore.hidesBillingUi) {
+    cols.push(
+      { key: 'balance', label: t('admin.users.columns.balance'), sortable: true },
+      { key: 'usage', label: t('admin.users.columns.usage'), sortable: false },
+      { key: 'usage_anthropic', label: t('admin.users.columns.usageAnthropic'), sortable: false },
+      { key: 'usage_openai', label: t('admin.users.columns.usageOpenAI'), sortable: false },
+      { key: 'usage_gemini', label: t('admin.users.columns.usageGemini'), sortable: false },
+      { key: 'usage_antigravity', label: t('admin.users.columns.usageAntigravity'), sortable: false },
+    )
+  }
+  cols.push(
+    { key: 'balance_platform_quota', label: t('admin.users.columns.balancePlatformQuota'), sortable: false },
+    { key: 'concurrency', label: t('admin.users.columns.concurrency'), sortable: true },
+    { key: 'status', label: t('admin.users.columns.status'), sortable: true },
+    { key: 'last_active_at', label: t('admin.users.columns.lastActive'), sortable: true },
+    { key: 'last_used_at', label: t('admin.users.columns.lastUsed'), sortable: true },
+    { key: 'created_at', label: t('admin.users.columns.created'), sortable: true },
+    { key: 'actions', label: t('admin.users.columns.actions'), sortable: false },
+  )
+  return cols
+})
 
 // Columns that can be toggled (exclude email and actions which are always visible)
 const toggleableColumns = computed(() =>

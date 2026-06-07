@@ -15,7 +15,7 @@
     <!-- Stats data -->
     <div v-else-if="props.stats" class="space-y-0.5 text-xs">
       <!-- Requests -->
-      <div class="flex items-center gap-1">
+      <div v-if="!hideBillingUi" class="flex items-center gap-1">
         <span class="text-gray-500 dark:text-gray-400"
           >{{ t('admin.accounts.stats.requests') }}:</span
         >
@@ -40,7 +40,7 @@
         }}</span>
       </div>
       <!-- Cost (User/API Key) -->
-      <div v-if="props.stats.user_cost != null" class="flex items-center gap-1">
+      <div v-if="props.stats.user_cost != null && !hideBillingUi" class="flex items-center gap-1">
         <span class="text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}:</span>
         <span class="font-medium text-gray-700 dark:text-gray-300">{{
           formatCurrency(props.stats.user_cost)
@@ -54,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { WindowStats } from '@/types'
 import { formatNumber, formatCurrency } from '@/utils/format'
@@ -63,15 +64,18 @@ const props = withDefaults(
     stats?: WindowStats | null
     loading?: boolean
     error?: string | null
+    hideBillingUi?: boolean
   }>(),
   {
     stats: null,
     loading: false,
-    error: null
+    error: null,
+    hideBillingUi: false
   }
 )
 
 const { t } = useI18n()
+const hideBillingUi = computed(() => props.hideBillingUi)
 
 // Format large token numbers (e.g., 1234567 -> 1.23M)
 const formatTokens = (tokens: number): string => {

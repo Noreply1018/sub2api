@@ -24,7 +24,7 @@
         </div>
 
         <!-- Total Tokens -->
-        <div class="card p-4">
+        <div v-if="!authStore.hidesBillingUi" class="card p-4">
           <div class="flex items-center gap-3">
             <div class="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
               <Icon name="cube" size="md" class="text-amber-600 dark:text-amber-400" />
@@ -592,20 +592,29 @@ const tokenTooltipData = ref<UsageLog | null>(null)
 // Usage stats from API
 const usageStats = ref<UsageStatsResponse | null>(null)
 
-const columns = computed<Column[]>(() => [
-  { key: 'api_key', label: t('usage.apiKeyFilter'), sortable: false },
-  { key: 'model', label: t('usage.model'), sortable: true },
-  { key: 'reasoning_effort', label: t('usage.reasoningEffort'), sortable: false },
-  { key: 'endpoint', label: t('usage.endpoint'), sortable: false },
-  { key: 'stream', label: t('usage.type'), sortable: false },
-  { key: 'billing_mode', label: t('admin.usage.billingMode'), sortable: false },
-  { key: 'tokens', label: t('usage.tokens'), sortable: false },
-  { key: 'cost', label: t('usage.cost'), sortable: false },
-  { key: 'first_token', label: t('usage.firstToken'), sortable: false },
-  { key: 'duration', label: t('usage.duration'), sortable: false },
-  { key: 'created_at', label: t('usage.time'), sortable: true },
-  { key: 'user_agent', label: t('usage.userAgent'), sortable: false }
-])
+const columns = computed<Column[]>(() => {
+  const cols: Column[] = [
+    { key: 'api_key', label: t('usage.apiKeyFilter'), sortable: false },
+    { key: 'model', label: t('usage.model'), sortable: true },
+    { key: 'reasoning_effort', label: t('usage.reasoningEffort'), sortable: false },
+    { key: 'endpoint', label: t('usage.endpoint'), sortable: false },
+    { key: 'stream', label: t('usage.type'), sortable: false },
+    { key: 'tokens', label: t('usage.tokens'), sortable: false },
+  ]
+  if (!authStore.hidesBillingUi) {
+    cols.push(
+      { key: 'billing_mode', label: t('admin.usage.billingMode'), sortable: false },
+      { key: 'cost', label: t('usage.cost'), sortable: false },
+    )
+  }
+  cols.push(
+    { key: 'first_token', label: t('usage.firstToken'), sortable: false },
+    { key: 'duration', label: t('usage.duration'), sortable: false },
+    { key: 'created_at', label: t('usage.time'), sortable: true },
+    { key: 'user_agent', label: t('usage.userAgent'), sortable: false },
+  )
+  return cols
+})
 
 const usageLogs = ref<UsageLog[]>([])
 const apiKeys = ref<ApiKey[]>([])
@@ -896,43 +905,63 @@ const exportToCSV = async () => {
       return
     }
 
-    const headers = [
+    const baseHeaders = [
       'Time',
       'API Key Name',
       'Model',
       'Reasoning Effort',
       'Inbound Endpoint',
       'Type',
-      'Billing Mode',
       'Input Tokens',
       'Output Tokens',
       'Cache Read Tokens',
-      'Cache Creation Tokens',
+      'Cache Creation Tokens'
+    ]
+    const billingHeaders = [
+      'Billing Mode',
       'Rate Multiplier',
       'Billed Cost',
-      'Original Cost',
+      'Original Cost'
+    ]
+    const tailHeaders = [
       'First Token (ms)',
       'Duration (ms)'
     ]
+    const headers = authStore.hidesBillingUi
+      ? [...baseHeaders, ...tailHeaders]
+      : [...baseHeaders, ...billingHeaders, ...tailHeaders]
     const rows = allLogs.map((log) =>
-      [
+      (authStore.hidesBillingUi ? [
         log.created_at,
         log.api_key?.name || '',
         log.model,
         formatReasoningEffort(log.reasoning_effort),
         log.inbound_endpoint || '',
         getRequestTypeExportText(log),
-        getBillingModeLabel(getDisplayBillingMode(log), t),
         log.input_tokens,
         log.output_tokens,
         log.cache_read_tokens,
         log.cache_creation_tokens,
+        log.first_token_ms ?? '',
+        log.duration_ms
+      ] : [
+        log.created_at,
+        log.api_key?.name || '',
+        log.model,
+        formatReasoningEffort(log.reasoning_effort),
+        log.inbound_endpoint || '',
+        getRequestTypeExportText(log),
+        log.input_tokens,
+        log.output_tokens,
+        log.cache_read_tokens,
+        log.cache_creation_tokens,
+        getBillingModeLabel(getDisplayBillingMode(log), t),
         log.rate_multiplier,
         log.actual_cost.toFixed(8),
         log.total_cost.toFixed(8),
         log.first_token_ms ?? '',
         log.duration_ms
-      ].map(escapeCSVValue)
+      ]).map(escapeCSVValue)
     )
 
     const csvContent = [

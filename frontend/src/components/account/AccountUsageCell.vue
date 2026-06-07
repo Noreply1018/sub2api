@@ -47,6 +47,7 @@
           :utilization="usageInfo.five_hour.utilization"
           :resets-at="usageInfo.five_hour.resets_at"
           :window-stats="usageInfo.five_hour.window_stats"
+          :hide-billing-ui="hideBillingUi"
           color="indigo"
         />
 
@@ -114,6 +115,7 @@
           :utilization="usageInfo.five_hour.utilization"
           :resets-at="usageInfo.five_hour.resets_at"
           :window-stats="usageInfo.five_hour.window_stats"
+          :hide-billing-ui="hideBillingUi"
           :show-now-when-idle="true"
           color="indigo"
         />
@@ -123,6 +125,7 @@
           :utilization="usageInfo.seven_day.utilization"
           :resets-at="usageInfo.seven_day.resets_at"
           :window-stats="usageInfo.seven_day.window_stats"
+          :hide-billing-ui="hideBillingUi"
           :show-now-when-idle="true"
           color="emerald"
         />
@@ -367,11 +370,11 @@
             <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800">
               {{ formatKeyTokens }}
             </span>
-            <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
+            <span v-if="!hideBillingUi" class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
               A ${{ formatKeyCost }}
             </span>
             <span
-              v-if="todayStats.user_cost != null"
+              v-if="todayStats.user_cost != null && !hideBillingUi"
               class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
               :title="t('usage.userBilled')"
             >
@@ -406,6 +409,7 @@
             :utilization="bar.utilization"
             :resets-at="bar.resetsAt"
             :window-stats="bar.windowStats"
+            :hide-billing-ui="hideBillingUi"
             :color="bar.color"
           />
           <p class="mt-1 text-[9px] leading-tight text-gray-400 dark:text-gray-500 italic">
@@ -443,11 +447,11 @@
           <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800">
             {{ formatKeyTokens }}
           </span>
-          <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
+          <span v-if="!hideBillingUi" class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
             A ${{ formatKeyCost }}
           </span>
           <span
-            v-if="todayStats.user_cost != null"
+            v-if="todayStats.user_cost != null && !hideBillingUi"
             class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
             :title="t('usage.userBilled')"
           >
@@ -471,6 +475,7 @@
         label="1d"
         :utilization="quotaDailyBar.utilization"
         :resets-at="quotaDailyBar.resetsAt"
+        :hide-billing-ui="hideBillingUi"
         color="indigo"
       />
       <UsageProgressBar
@@ -478,12 +483,14 @@
         label="7d"
         :utilization="quotaWeeklyBar.utilization"
         :resets-at="quotaWeeklyBar.resetsAt"
+        :hide-billing-ui="hideBillingUi"
         color="emerald"
       />
       <UsageProgressBar
         v-if="quotaTotalBar"
         label="total"
         :utilization="quotaTotalBar.utilization"
+        :hide-billing-ui="hideBillingUi"
         color="purple"
       />
 
@@ -496,6 +503,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import { adminAPI } from '@/api/admin'
 import type { Account, AccountUsageInfo, GeminiCredentials, WindowStats } from '@/types'
 import { buildOpenAIUsageRefreshKey } from '@/utils/accountUsageRefresh'
@@ -523,6 +531,8 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+const authStore = useAuthStore()
+const hideBillingUi = computed(() => authStore.hidesBillingUi)
 const desktopViewportQuery = '(min-width: 768px)'
 
 const unmounted = ref(false)
