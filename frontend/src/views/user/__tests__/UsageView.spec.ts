@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 
 import UsageView from '../UsageView.vue'
 
@@ -106,6 +107,8 @@ const DataTableStub = {
 
 describe('user UsageView tooltip', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
+
     query.mockReset()
     getStatsByDateRange.mockReset()
     list.mockReset()

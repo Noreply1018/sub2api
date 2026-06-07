@@ -4,15 +4,15 @@ import { DriveStep } from 'driver.js'
  * 管理员完整引导流程
  * 交互式引导：指引用户实际操作
  * @param t 国际化函数
- * @param isSimpleMode 是否为简易模式（简易模式下会过滤分组相关步骤）
+ * @param hideBillingUi 是否隐藏计费 UI（隐藏时过滤分组/倍率相关步骤）
  */
-export const getAdminSteps = (t: (key: string) => string, isSimpleMode = false): DriveStep[] => {
+export const getAdminSteps = (t: (key: string) => string, hideBillingUi = false): DriveStep[] => {
   const allSteps: DriveStep[] = [
   // ========== 欢迎介绍 ==========
   {
     popover: {
       title: t('onboarding.admin.welcome.title'),
-      description: t('onboarding.admin.welcome.description'),
+      description: t(hideBillingUi ? 'onboarding.admin.welcome.personalDescription' : 'onboarding.admin.welcome.description'),
       align: 'center',
       nextBtnText: t('onboarding.admin.welcome.nextBtn'),
       prevBtnText: t('onboarding.admin.welcome.prevBtn')
@@ -226,8 +226,8 @@ export const getAdminSteps = (t: (key: string) => string, isSimpleMode = false):
   }
   ]
 
-  // 简易模式下过滤分组相关步骤
-  if (isSimpleMode) {
+  // 隐藏计费 UI 时过滤分组/倍率相关步骤
+  if (hideBillingUi) {
     return allSteps.filter(step => {
       const element = step.element as string | undefined
       // 过滤掉分组管理和账号分组选择相关步骤

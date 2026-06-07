@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-2 gap-4" :class="hideBillingUi ? 'lg:grid-cols-3' : 'lg:grid-cols-4'">
-    <div v-if="!hideBillingUi" class="card p-4 flex items-center gap-3">
+    <div class="card p-4 flex items-center gap-3">
       <div class="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30 text-blue-600">
         <Icon name="document" size="md" />
       </div>
@@ -21,7 +21,7 @@
         </p>
       </div>
     </div>
-    <div class="card p-4 flex items-center gap-3">
+    <div v-if="!hideBillingUi" class="card p-4 flex items-center gap-3">
       <div class="rounded-lg bg-green-100 p-2 dark:bg-green-900/30 text-green-600">
         <Icon name="dollar" size="md" />
       </div>

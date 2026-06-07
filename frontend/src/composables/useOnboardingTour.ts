@@ -94,8 +94,8 @@ export function useOnboardingTour(options: OnboardingOptions) {
   const startTour = async (startIndex = 0) => {
     // 动态获取当前用户角色和步骤
     const isAdmin = userStore.user?.role === 'admin'
-    const isSimpleMode = userStore.isSimpleMode
-    const steps = isAdmin ? getAdminSteps(t, isSimpleMode) : getUserSteps(t)
+    const hideBillingUi = userStore.hidesBillingUi
+    const steps = isAdmin ? getAdminSteps(t, hideBillingUi) : getUserSteps(t)
 
     // 确保 DOM 就绪
     await nextTick()
@@ -531,8 +531,8 @@ export function useOnboardingTour(options: OnboardingOptions) {
       return
     }
 
-    // 简易模式下禁用新手引导
-    if (userStore.isSimpleMode) {
+    // 隐藏计费 UI 的模式下禁用管理员新手引导自动弹出
+    if (userStore.hidesBillingUi) {
       return
     }
 
