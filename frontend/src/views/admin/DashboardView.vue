@@ -42,7 +42,7 @@
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
                   {{ stats.total_accounts }}
                 </p>
-                <p class="text-xs">
+                <p v-if="!authStore.hidesBillingUi" class="text-xs">
                   <span class="text-green-600 dark:text-green-400"
                     >{{ stats.normal_accounts }} {{ t('common.active') }}</span
                   >
@@ -110,7 +110,7 @@
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
                   {{ formatTokens(stats.today_tokens) }}
                 </p>
-                <p class="text-xs">
+                <p v-if="!authStore.hidesBillingUi" class="text-xs">
                   <span
                     class="text-green-600 dark:text-green-400"
                     :title="t('admin.dashboard.actual')"
@@ -146,7 +146,7 @@
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
                   {{ formatTokens(stats.total_tokens) }}
                 </p>
-                <p class="text-xs">
+                <p v-if="!authStore.hidesBillingUi" class="text-xs">
                   <span
                     class="text-green-600 dark:text-green-400"
                     :title="t('admin.dashboard.actual')"
@@ -253,7 +253,8 @@
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <ModelDistributionChart
               :model-stats="modelStats"
-              :enable-ranking-view="true"
+              :enable-ranking-view="!authStore.hidesBillingUi"
+              :hide-billing-ui="authStore.hidesBillingUi"
               :ranking-items="rankingItems"
               :ranking-total-actual-cost="rankingTotalActualCost"
               :ranking-total-requests="rankingTotalRequests"
@@ -265,7 +266,7 @@
               :end-date="endDate"
               @ranking-click="goToUserUsage"
             />
-            <TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" />
+            <TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" :hide-billing-ui="authStore.hidesBillingUi" />
           </div>
 
           <!-- User Usage Trend (Full Width) -->
@@ -297,6 +298,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 import { adminAPI } from '@/api/admin'
@@ -339,6 +341,7 @@ ChartJS.register(
 )
 
 const appStore = useAppStore()
+const authStore = useAuthStore()
 const router = useRouter()
 const stats = ref<DashboardStats | null>(null)
 const loading = ref(false)
@@ -647,6 +650,16 @@ const loadUsersTrend = async () => {
 }
 
 const loadUserSpendingRanking = async () => {
+  if (authStore.hidesBillingUi) {
+    rankingItems.value = []
+    rankingTotalActualCost.value = 0
+    rankingTotalRequests.value = 0
+    rankingTotalTokens.value = 0
+    rankingLoading.value = false
+    rankingError.value = false
+    return
+  }
+
   const currentSeq = ++rankingLoadSeq
   rankingLoading.value = true
   rankingError.value = false

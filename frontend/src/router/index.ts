@@ -819,7 +819,14 @@ router.beforeEach(async (to, _from, next) => {
 
   if (authStore.isPersonalMode) {
     const restrictedBillingPaths = [
+      '/admin/subscriptions',
+      '/admin/redeem',
+      '/admin/promo-codes',
+      '/admin/affiliates',
+      '/admin/orders',
       '/subscriptions',
+      '/purchase',
+      '/orders',
       '/redeem',
       '/affiliate'
     ]

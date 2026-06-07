@@ -168,4 +168,38 @@ describe('ModelDistributionChart', () => {
     expect(rows[2].text()).toContain('400')
     expect(rows[2].text()).toContain('$10.00')
   })
+
+  it('hides billing columns, cost metric, and spending ranking in personal mode', () => {
+    const wrapper = mount(ModelDistributionChart, {
+      props: {
+        modelStats,
+        metric: 'actual_cost',
+        showMetricToggle: true,
+        enableRankingView: true,
+        hideBillingUi: true,
+        rankingItems: [
+          { user_id: 1, email: 'alpha@example.com', actual_cost: 12, requests: 10, tokens: 1000 },
+        ],
+        rankingTotalActualCost: 12,
+        rankingTotalRequests: 10,
+        rankingTotalTokens: 1000,
+      },
+      global: {
+        stubs: {
+          LoadingSpinner: true,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Model Distribution')
+    expect(wrapper.text()).not.toContain('By Actual Cost')
+    expect(wrapper.text()).not.toContain('User Spending Ranking')
+    expect(wrapper.text()).not.toContain('Actual')
+    expect(wrapper.text()).not.toContain('Standard')
+    expect(wrapper.text()).not.toContain('$')
+
+    const chartData = JSON.parse(wrapper.find('.chart-data').text())
+    expect(chartData.labels).toEqual(['model-a', 'model-b'])
+    expect(chartData.datasets[0].data).toEqual([1000, 500])
+  })
 })

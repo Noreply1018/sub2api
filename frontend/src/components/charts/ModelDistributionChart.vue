@@ -2,7 +2,7 @@
   <div class="card p-4">
     <div class="mb-4 flex items-center justify-between gap-3">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
-        {{ !enableRankingView || activeView === 'model_distribution'
+        {{ currentView === 'model_distribution'
           ? t('admin.dashboard.modelDistribution')
           : t('admin.dashboard.spendingRankingTitle') }}
       </h3>
@@ -43,7 +43,7 @@
           </button>
         </div>
         <div
-          v-if="showMetricToggle"
+          v-if="showMetricToggle && !hideBillingUi"
           class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-dark-800"
         >
           <button
@@ -67,7 +67,7 @@
             {{ t('admin.dashboard.metricActualCost') }}
           </button>
         </div>
-        <div v-if="enableRankingView" class="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-dark-800">
+        <div v-if="enableRankingView && !hideBillingUi" class="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-dark-800">
           <button
             type="button"
             class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors"
@@ -96,11 +96,11 @@
       </div>
     </div>
 
-    <div v-if="activeView === 'model_distribution' && loading" class="flex h-48 items-center justify-center">
+    <div v-if="currentView === 'model_distribution' && loading" class="flex h-48 items-center justify-center">
       <LoadingSpinner />
     </div>
     <div
-      v-else-if="activeView === 'model_distribution' && displayModelStats.length > 0 && chartData"
+      v-else-if="currentView === 'model_distribution' && displayModelStats.length > 0 && chartData"
       class="flex items-center gap-6"
     >
       <div class="h-48 w-48">
@@ -113,9 +113,9 @@
               <th class="pb-2 text-left">{{ t('admin.dashboard.model') }}</th>
               <th class="pb-2 text-right">{{ t('admin.dashboard.requests') }}</th>
               <th class="pb-2 text-right">{{ t('admin.dashboard.tokens') }}</th>
-              <th class="pb-2 text-right">{{ t('admin.dashboard.actual') }}</th>
-              <th class="pb-2 text-right">{{ t('admin.dashboard.accountCost') }}</th>
-              <th class="pb-2 text-right">{{ t('admin.dashboard.standard') }}</th>
+              <th v-if="!hideBillingUi" class="pb-2 text-right">{{ t('admin.dashboard.actual') }}</th>
+              <th v-if="!hideBillingUi" class="pb-2 text-right">{{ t('admin.dashboard.accountCost') }}</th>
+              <th v-if="!hideBillingUi" class="pb-2 text-right">{{ t('admin.dashboard.standard') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -140,21 +140,22 @@
                 <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">
                   {{ formatTokens(model.total_tokens) }}
                 </td>
-                <td class="py-1.5 text-right text-green-600 dark:text-green-400">
+                <td v-if="!hideBillingUi" class="py-1.5 text-right text-green-600 dark:text-green-400">
                   ${{ formatCost(model.actual_cost) }}
                 </td>
-                <td class="py-1.5 text-right text-orange-500 dark:text-orange-400">
+                <td v-if="!hideBillingUi" class="py-1.5 text-right text-orange-500 dark:text-orange-400">
                   ${{ formatCost(model.account_cost) }}
                 </td>
-                <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
+                <td v-if="!hideBillingUi" class="py-1.5 text-right text-gray-400 dark:text-gray-500">
                   ${{ formatCost(model.cost) }}
                 </td>
               </tr>
               <tr v-if="expandedKey === `model-${model.model}`">
-                <td colspan="6" class="p-0">
+                <td :colspan="hideBillingUi ? 3 : 6" class="p-0">
                   <UserBreakdownSubTable
                     :items="breakdownItems"
                     :loading="breakdownLoading"
+                    :hide-billing-ui="hideBillingUi"
                   />
                 </td>
               </tr>
@@ -164,7 +165,7 @@
       </div>
     </div>
     <div
-      v-else-if="activeView === 'model_distribution'"
+      v-else-if="currentView === 'model_distribution'"
       class="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400"
     >
       {{ t('admin.dashboard.noDataAvailable') }}
@@ -275,6 +276,7 @@ const props = withDefaults(defineProps<{
   startDate?: string
   endDate?: string
   filters?: Record<string, any>
+  hideBillingUi?: boolean
 }>(), {
   upstreamModelStats: () => [],
   mappingModelStats: () => [],
@@ -289,7 +291,8 @@ const props = withDefaults(defineProps<{
   showSourceToggle: false,
   showMetricToggle: false,
   rankingLoading: false,
-  rankingError: false
+  rankingError: false,
+  hideBillingUi: false
 })
 
 const expandedKey = ref<string | null>(null)
@@ -328,7 +331,14 @@ const emit = defineEmits<{
 }>()
 
 const enableRankingView = computed(() => props.enableRankingView)
+const hideBillingUi = computed(() => props.hideBillingUi)
+const effectiveMetric = computed<DistributionMetric>(() => hideBillingUi.value ? 'tokens' : props.metric)
 const activeView = ref<'model_distribution' | 'spending_ranking'>('model_distribution')
+const currentView = computed(() => (
+  enableRankingView.value && !hideBillingUi.value && activeView.value === 'spending_ranking'
+    ? 'spending_ranking'
+    : 'model_distribution'
+))
 
 const chartColors = [
   '#3b82f6',
@@ -353,7 +363,7 @@ const displayModelStats = computed(() => {
       : props.modelStats
   if (!sourceStats?.length) return []
 
-  const metricKey = props.metric === 'actual_cost' ? 'actual_cost' : 'total_tokens'
+  const metricKey = effectiveMetric.value === 'actual_cost' ? 'actual_cost' : 'total_tokens'
   return [...sourceStats].sort((a, b) => b[metricKey] - a[metricKey])
 })
 
@@ -364,7 +374,7 @@ const chartData = computed(() => {
     labels: displayModelStats.value.map((m) => m.model),
     datasets: [
       {
-        data: displayModelStats.value.map((m) => props.metric === 'actual_cost' ? m.actual_cost : m.total_tokens),
+        data: displayModelStats.value.map((m) => effectiveMetric.value === 'actual_cost' ? m.actual_cost : m.total_tokens),
         backgroundColor: chartColors.slice(0, displayModelStats.value.length),
         borderWidth: 0
       }
@@ -373,6 +383,7 @@ const chartData = computed(() => {
 })
 
 const rankingChartData = computed(() => {
+  if (hideBillingUi.value) return null
   if (!props.rankingItems?.length) return null
 
   const labels = props.rankingItems.map((item, index) => `#${index + 1} ${getRankingUserLabel(item)}`)
@@ -398,6 +409,7 @@ const rankingChartData = computed(() => {
 })
 
 const otherRankingItem = computed<RankingDisplayItem | null>(() => {
+  if (hideBillingUi.value) return null
   if (!props.rankingItems?.length) return null
 
   const rankedActualCost = props.rankingItems.reduce((sum, item) => sum + item.actual_cost, 0)
@@ -421,6 +433,7 @@ const otherRankingItem = computed<RankingDisplayItem | null>(() => {
 })
 
 const rankingDisplayItems = computed<RankingDisplayItem[]>(() => {
+  if (hideBillingUi.value) return []
   if (!props.rankingItems?.length) return []
   return otherRankingItem.value
     ? [...props.rankingItems, otherRankingItem.value]
@@ -440,7 +453,7 @@ const doughnutOptions = computed(() => ({
           const value = context.raw as number
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
-          const formattedValue = props.metric === 'actual_cost'
+          const formattedValue = effectiveMetric.value === 'actual_cost'
             ? `$${formatCost(value)}`
             : formatTokens(value)
           return `${context.label}: ${formattedValue} (${percentage}%)`
@@ -460,6 +473,7 @@ const rankingDoughnutOptions = computed(() => ({
     tooltip: {
       callbacks: {
         label: (context: any) => {
+          if (hideBillingUi.value) return ''
           const value = context.raw as number
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
@@ -495,7 +509,8 @@ const getRankingRowLabel = (item: RankingDisplayItem): string => {
   return getRankingUserLabel(item)
 }
 
-const formatCost = (value: number): string => {
+const formatCost = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) return '0.0000'
   if (value >= 1000) {
     return (value / 1000).toFixed(2) + 'K'
   } else if (value >= 1) {

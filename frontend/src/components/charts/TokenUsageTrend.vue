@@ -52,6 +52,7 @@ const { t } = useI18n()
 const props = defineProps<{
   trendData: TrendDataPoint[]
   loading?: boolean
+  hideBillingUi?: boolean
 }>()
 
 const isDarkMode = computed(() => {
@@ -152,6 +153,7 @@ const lineOptions = computed(() => ({
           return `${context.dataset.label}: ${formatTokens(context.raw)}`
         },
         footer: (tooltipItems: any) => {
+          if (props.hideBillingUi) return ''
           const dataIndex = tooltipItems[0]?.dataIndex
           if (dataIndex !== undefined && props.trendData[dataIndex]) {
             const data = props.trendData[dataIndex]

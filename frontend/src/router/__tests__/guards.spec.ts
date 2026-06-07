@@ -52,6 +52,7 @@ interface MockAuthState {
   isAuthenticated: boolean
   isAdmin: boolean
   isSimpleMode: boolean
+  isPersonalMode?: boolean
   backendModeEnabled: boolean
   hasPendingAuthSession: boolean
   setupNeedsSetup?: boolean
@@ -112,6 +113,25 @@ function simulateGuard(
   // 需要管理员但不是管理员
   if (requiresAdmin && !authState.isAdmin) {
     return '/dashboard'
+  }
+
+  // personal 模式限制
+  if (authState.isPersonalMode) {
+    const restrictedBillingPaths = [
+      '/admin/subscriptions',
+      '/admin/redeem',
+      '/admin/promo-codes',
+      '/admin/affiliates',
+      '/admin/orders',
+      '/subscriptions',
+      '/purchase',
+      '/orders',
+      '/redeem',
+      '/affiliate',
+    ]
+    if (restrictedBillingPaths.some((path) => toPath.startsWith(path))) {
+      return authState.isAdmin ? '/admin/dashboard' : '/dashboard'
+    }
   }
 
   // 简易模式限制
@@ -332,6 +352,40 @@ describe('路由守卫逻辑', () => {
       }
       const redirect = simulateGuard('/keys', {}, authState)
       expect(redirect).toBeNull()
+    })
+  })
+
+  describe('personal 模式受限路由', () => {
+    it('管理员 personal 模式访问管理侧计费页面重定向', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: true,
+        isAdmin: true,
+        isSimpleMode: false,
+        isPersonalMode: true,
+        backendModeEnabled: false,
+        hasPendingAuthSession: false,
+      }
+
+      expect(simulateGuard('/admin/subscriptions', { requiresAdmin: true }, authState)).toBe('/admin/dashboard')
+      expect(simulateGuard('/admin/redeem', { requiresAdmin: true }, authState)).toBe('/admin/dashboard')
+      expect(simulateGuard('/admin/promo-codes', { requiresAdmin: true }, authState)).toBe('/admin/dashboard')
+      expect(simulateGuard('/admin/orders', { requiresAdmin: true }, authState)).toBe('/admin/dashboard')
+    })
+
+    it('普通用户 personal 模式访问用户侧计费页面重定向', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: true,
+        isAdmin: false,
+        isSimpleMode: false,
+        isPersonalMode: true,
+        backendModeEnabled: false,
+        hasPendingAuthSession: false,
+      }
+
+      expect(simulateGuard('/subscriptions', {}, authState)).toBe('/dashboard')
+      expect(simulateGuard('/purchase', {}, authState)).toBe('/dashboard')
+      expect(simulateGuard('/orders', {}, authState)).toBe('/dashboard')
+      expect(simulateGuard('/redeem', {}, authState)).toBe('/dashboard')
     })
   })
 
