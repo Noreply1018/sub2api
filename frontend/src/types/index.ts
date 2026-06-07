@@ -181,6 +181,8 @@ export interface CustomEndpoint {
   description: string
 }
 
+export type RunMode = 'standard' | 'simple' | 'personal'
+
 export interface LoginAgreementDocument {
   id: string
   title: string
@@ -205,6 +207,7 @@ export interface PublicSettings {
   site_name: string
   site_logo: string
   site_subtitle: string
+  run_mode?: RunMode
   api_base_url: string
   contact_info: string
   doc_url: string
@@ -242,11 +245,11 @@ export interface AuthResponse {
   refresh_token?: string  // New: Refresh Token for token renewal
   expires_in?: number     // New: Access Token expiry time in seconds
   token_type: string
-  user: User & { run_mode?: 'standard' | 'simple' }
+  user: User & { run_mode?: RunMode }
 }
 
 export interface CurrentUserResponse extends User {
-  run_mode?: 'standard' | 'simple'
+  run_mode?: RunMode
 }
 
 // ==================== Subscription Types ====================

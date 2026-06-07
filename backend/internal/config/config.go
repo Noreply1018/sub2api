@@ -18,6 +18,7 @@ import (
 const (
 	RunModeStandard = "standard"
 	RunModeSimple   = "simple"
+	RunModePersonal = "personal"
 )
 
 // 使用量记录队列溢出策略
@@ -1332,11 +1333,15 @@ type UsageCleanupConfig struct {
 func NormalizeRunMode(value string) string {
 	normalized := strings.ToLower(strings.TrimSpace(value))
 	switch normalized {
-	case RunModeStandard, RunModeSimple:
+	case RunModeStandard, RunModeSimple, RunModePersonal:
 		return normalized
 	default:
 		return RunModeStandard
 	}
+}
+
+func IsPersonalRunMode(value string) bool {
+	return NormalizeRunMode(value) == RunModePersonal
 }
 
 // Load 读取并校验完整配置（要求 jwt.secret 已显式提供）。

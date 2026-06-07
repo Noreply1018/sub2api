@@ -25,7 +25,7 @@
     <!-- Right: rate pill + checkmark (vertically centered to first row) -->
     <div class="flex shrink-0 items-center gap-2 pt-0.5">
       <!-- Rate pill (platform color) -->
-      <span v-if="rateMultiplier !== undefined" :class="['inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold', ratePillClass]">
+      <span v-if="rateMultiplier !== undefined && !authStore.hidesBillingUi" :class="['inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold', ratePillClass]">
         <template v-if="hasCustomRate">
           <span class="mr-1 line-through opacity-50">{{ rateMultiplier }}x</span>
           <span class="font-bold">{{ userRateMultiplier }}x</span>
@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import GroupBadge from './GroupBadge.vue'
+import { useAuthStore } from '@/stores/auth'
 import type { SubscriptionType, GroupPlatform } from '@/types'
 
 interface Props {
@@ -71,6 +72,7 @@ const props = withDefaults(defineProps<Props>(), {
   showCheckmark: true,
   userRateMultiplier: null
 })
+const authStore = useAuthStore()
 
 // Whether user has a custom rate different from default
 const hasCustomRate = computed(() => {

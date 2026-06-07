@@ -114,6 +114,19 @@ func TestBillingCacheService_CheckRPM_UserLimitIsGlobalHardCap(t *testing.T) {
 	require.ErrorIs(t, svc.checkRPM(context.Background(), user, group), ErrUserRPMExceeded, "user 全局硬上限应优先于 override")
 }
 
+func TestBillingCacheService_PersonalModeSkipsBalanceButKeepsRPM(t *testing.T) {
+	cache := &userRPMCacheStub{userCounts: []int{1, 2}}
+	svc := NewBillingCacheService(nil, nil, nil, nil, cache, &rpmOverrideRepoStub{}, &config.Config{RunMode: config.RunModePersonal}, nil)
+	t.Cleanup(svc.Stop)
+
+	user := &User{ID: 1, RPMLimit: 1}
+	group := &Group{ID: 10, RPMLimit: 0}
+
+	require.NoError(t, svc.CheckBillingEligibility(context.Background(), user, nil, group, nil, ""))
+	require.ErrorIs(t, svc.CheckBillingEligibility(context.Background(), user, nil, group, nil, ""), ErrUserRPMExceeded)
+	require.EqualValues(t, 2, atomic.LoadInt32(&cache.userCalls))
+}
+
 func TestBillingCacheService_CheckRPM_OverrideZeroSkipsGroupButUserStillApplies(t *testing.T) {
 	zero := 0
 	// user 计数: 依次返回 1..6

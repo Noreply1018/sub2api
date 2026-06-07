@@ -28,7 +28,7 @@
         v-for="group in filteredGroups"
         :key="group.id"
         class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-white dark:hover:bg-dark-700"
-        :title="t('admin.groups.rateAndAccounts', { rate: group.rate_multiplier, count: group.account_count || 0 })"
+        :title="groupTitle(group)"
       >
         <input
           type="checkbox"
@@ -59,11 +59,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import GroupBadge from './GroupBadge.vue'
 import Icon from '@/components/icons/Icon.vue'
 import type { AdminGroup, GroupPlatform } from '@/types'
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 
 interface Props {
   modelValue: number[]
@@ -81,6 +83,13 @@ const emit = defineEmits<{
 }>()
 
 const searchText = ref('')
+
+function groupTitle(group: AdminGroup): string {
+  if (authStore.hidesBillingUi) {
+    return `${group.name} (${group.account_count || 0})`
+  }
+  return t('admin.groups.rateAndAccounts', { rate: group.rate_multiplier, count: group.account_count || 0 })
+}
 
 const isSearchable = computed(() => {
   if (props.searchable === 'auto') return props.groups.length > 5

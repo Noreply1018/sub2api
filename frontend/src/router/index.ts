@@ -811,7 +811,20 @@ router.beforeEach(async (to, _from, next) => {
   // Check payment requirement (internal payment system only)
   if (to.meta.requiresPayment) {
     const paymentEnabled = appStore.cachedPublicSettings?.payment_enabled
-    if (!paymentEnabled) {
+    if (!paymentEnabled || authStore.isPersonalMode) {
+      next(authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
+      return
+    }
+  }
+
+  if (authStore.isPersonalMode) {
+    const restrictedBillingPaths = [
+      '/subscriptions',
+      '/redeem',
+      '/affiliate'
+    ]
+
+    if (restrictedBillingPaths.some((path) => to.path.startsWith(path))) {
       next(authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
       return
     }

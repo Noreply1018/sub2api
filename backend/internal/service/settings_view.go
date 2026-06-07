@@ -249,6 +249,7 @@ type PublicSettings struct {
 	SiteName                         string
 	SiteLogo                         string
 	SiteSubtitle                     string
+	RunMode                          string
 	APIBaseURL                       string
 	ContactInfo                      string
 	DocURL                           string

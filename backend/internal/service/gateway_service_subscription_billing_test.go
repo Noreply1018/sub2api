@@ -4,6 +4,8 @@ package service
 
 import (
 	"testing"
+
+	"github.com/Wei-Shaw/sub2api/internal/config"
 )
 
 // TestBuildUsageBillingCommand_SubscriptionAppliesRateMultiplier locks in the fix
@@ -81,5 +83,36 @@ func TestBuildUsageBillingCommand_SubscriptionAppliesRateMultiplier(t *testing.T
 				t.Errorf("BalanceCost = %v, want %v", cmd.BalanceCost, tt.wantBalance)
 			}
 		})
+	}
+}
+
+func TestBuildUsageBillingCommand_PersonalModeSkipsBalanceCost(t *testing.T) {
+	p := &postUsageBillingParams{
+		Cost:                 &CostBreakdown{TotalCost: 1.25, ActualCost: 1.25},
+		User:                 &User{ID: 1},
+		APIKey:               &APIKey{ID: 2},
+		Account:              &Account{ID: 3},
+		SkipBalanceDeduction: true,
+	}
+
+	cmd := buildUsageBillingCommand("req-personal", nil, p)
+	if cmd == nil {
+		t.Fatal("buildUsageBillingCommand returned nil")
+	}
+	if cmd.BalanceCost != 0 {
+		t.Errorf("BalanceCost = %v, want 0", cmd.BalanceCost)
+	}
+}
+
+func TestOpenAIGatewayServiceBillingDepsCarriesConfig(t *testing.T) {
+	cfg := &config.Config{RunMode: config.RunModePersonal}
+	svc := &OpenAIGatewayService{cfg: cfg}
+
+	deps := svc.billingDeps()
+	if deps == nil {
+		t.Fatal("billingDeps returned nil")
+	}
+	if deps.cfg != cfg {
+		t.Fatalf("billingDeps cfg = %p, want %p", deps.cfg, cfg)
 	}
 }

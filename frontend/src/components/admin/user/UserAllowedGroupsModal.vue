@@ -68,15 +68,15 @@
                       <PlatformIcon :platform="config.platform" size="xs" />
                       <span>{{ config.platform }}</span>
                     </span>
-                    <span class="text-gray-300 dark:text-dark-500">•</span>
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <span v-if="!authStore.hidesBillingUi" class="text-gray-300 dark:text-dark-500">•</span>
+                    <span v-if="!authStore.hidesBillingUi" class="text-gray-500 dark:text-gray-400">
                       {{ t('admin.users.defaultRate') }}: <span class="font-medium text-gray-700 dark:text-gray-300">{{ config.defaultRate }}x</span>
                     </span>
                   </div>
                 </div>
 
                 <!-- 专属倍率输入 -->
-                <div class="flex flex-shrink-0 items-center gap-3">
+                <div v-if="!authStore.hidesBillingUi" class="flex flex-shrink-0 items-center gap-3">
                   <label class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ t('admin.users.customRate') }}</label>
                   <input
                     type="number"
@@ -126,15 +126,15 @@
                       <PlatformIcon :platform="config.platform" size="xs" />
                       <span>{{ config.platform }}</span>
                     </span>
-                    <span class="text-gray-300 dark:text-dark-500">•</span>
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <span v-if="!authStore.hidesBillingUi" class="text-gray-300 dark:text-dark-500">•</span>
+                    <span v-if="!authStore.hidesBillingUi" class="text-gray-500 dark:text-gray-400">
                       {{ t('admin.users.defaultRate') }}: <span class="font-medium text-gray-700 dark:text-gray-300">{{ config.defaultRate }}x</span>
                     </span>
                   </div>
                 </div>
 
                 <!-- 专属倍率输入 -->
-                <div class="flex flex-shrink-0 items-center gap-3">
+                <div v-if="!authStore.hidesBillingUi" class="flex flex-shrink-0 items-center gap-3">
                   <label class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ t('admin.users.customRate') }}</label>
                   <input
                     type="number"
@@ -182,6 +182,7 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { adminAPI } from '@/api/admin'
 import type { AdminUser, Group, GroupPlatform } from '@/types'
 import BaseDialog from '@/components/common/BaseDialog.vue'
@@ -201,6 +202,7 @@ const props = defineProps<{ show: boolean; user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])
 const { t } = useI18n()
 const appStore = useAppStore()
+const authStore = useAuthStore()
 
 const groups = ref<Group[]>([])
 const groupConfigs = ref<GroupRateConfig[]>([])
@@ -287,15 +289,17 @@ const handleSave = async () => {
     // - 有新专属倍率: 设置为该值
     // - 原本有专属倍率但现在被清空: 设置为 null（表示删除）
     const groupRates: Record<number, number | null> = {}
-    for (const c of groupConfigs.value) {
-      const hadOriginalRate = originalGroupRates.value[c.groupId] !== undefined
+    if (!authStore.hidesBillingUi) {
+      for (const c of groupConfigs.value) {
+        const hadOriginalRate = originalGroupRates.value[c.groupId] !== undefined
 
-      if (c.customRate !== null) {
-        // 有专属倍率
-        groupRates[c.groupId] = c.customRate
-      } else if (hadOriginalRate) {
-        // 原本有专属倍率，现在被清空，需要显式删除
-        groupRates[c.groupId] = null
+        if (c.customRate !== null) {
+          // 有专属倍率
+          groupRates[c.groupId] = c.customRate
+        } else if (hadOriginalRate) {
+          // 原本有专属倍率，现在被清空，需要显式删除
+          groupRates[c.groupId] = null
+        }
       }
     }
 

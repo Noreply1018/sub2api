@@ -297,6 +297,7 @@
                 <span class="text-xs">{{ t("common.edit") }}</span>
               </button>
               <button
+                v-if="!authStore.hidesBillingUi"
                 @click="handleRateMultipliers(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
               >
@@ -482,7 +483,7 @@
           </select>
           <p class="input-hint">{{ t("admin.groups.copyAccounts.hint") }}</p>
         </div>
-        <div>
+        <div v-if="!authStore.hidesBillingUi">
           <label class="input-label">{{
             t("admin.groups.form.rateMultiplier")
           }}</label>
@@ -1769,7 +1770,7 @@
             {{ t("admin.groups.copyAccounts.hintEdit") }}
           </p>
         </div>
-        <div>
+        <div v-if="!authStore.hidesBillingUi">
           <label class="input-label">{{
             t("admin.groups.form.rateMultiplier")
           }}</label>
@@ -3020,6 +3021,7 @@
 
     <!-- Group Rate Multipliers Modal -->
     <GroupRateMultipliersModal
+      v-if="!authStore.hidesBillingUi"
       :show="showRateMultipliersModal"
       :group="rateMultipliersGroup"
       @close="showRateMultipliersModal = false"
@@ -3040,6 +3042,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/stores/app";
+import { useAuthStore } from "@/stores/auth";
 import { useOnboardingStore } from "@/stores/onboarding";
 import { adminAPI } from "@/api/admin";
 import type { AdminGroup, GroupPlatform, SubscriptionType } from "@/types";
@@ -3081,44 +3084,52 @@ import { normalizeSupportedModelScopesForPlatform } from "./groupsSupportedModel
 
 const { t } = useI18n();
 const appStore = useAppStore();
+const authStore = useAuthStore();
 const onboardingStore = useOnboardingStore();
 
-const columns = computed<Column[]>(() => [
-  { key: "name", label: t("admin.groups.columns.name"), sortable: true },
-  {
-    key: "platform",
-    label: t("admin.groups.columns.platform"),
-    sortable: true,
-  },
-  {
-    key: "billing_type",
-    label: t("admin.groups.columns.billingType"),
-    sortable: true,
-  },
-  {
-    key: "rate_multiplier",
-    label: t("admin.groups.columns.rateMultiplier"),
-    sortable: true,
-  },
-  {
-    key: "is_exclusive",
-    label: t("admin.groups.columns.type"),
-    sortable: true,
-  },
-  {
-    key: "account_count",
-    label: t("admin.groups.columns.accounts"),
-    sortable: true,
-  },
-  {
-    key: "capacity",
-    label: t("admin.groups.columns.capacity"),
-    sortable: false,
-  },
-  { key: "usage", label: t("admin.groups.columns.usage"), sortable: false },
-  { key: "status", label: t("admin.groups.columns.status"), sortable: true },
-  { key: "actions", label: t("admin.groups.columns.actions"), sortable: false },
-]);
+const columns = computed<Column[]>(() => {
+  const cols: Column[] = [
+    { key: "name", label: t("admin.groups.columns.name"), sortable: true },
+    {
+      key: "platform",
+      label: t("admin.groups.columns.platform"),
+      sortable: true,
+    },
+    {
+      key: "billing_type",
+      label: t("admin.groups.columns.billingType"),
+      sortable: true,
+    },
+  ];
+  if (!authStore.hidesBillingUi) {
+    cols.push({
+      key: "rate_multiplier",
+      label: t("admin.groups.columns.rateMultiplier"),
+      sortable: true,
+    });
+  }
+  cols.push(
+    {
+      key: "is_exclusive",
+      label: t("admin.groups.columns.type"),
+      sortable: true,
+    },
+    {
+      key: "account_count",
+      label: t("admin.groups.columns.accounts"),
+      sortable: true,
+    },
+    {
+      key: "capacity",
+      label: t("admin.groups.columns.capacity"),
+      sortable: false,
+    },
+    { key: "usage", label: t("admin.groups.columns.usage"), sortable: false },
+    { key: "status", label: t("admin.groups.columns.status"), sortable: true },
+    { key: "actions", label: t("admin.groups.columns.actions"), sortable: false },
+  );
+  return cols;
+});
 
 // Filter options
 const statusOptions = computed(() => [
@@ -4189,6 +4200,7 @@ const removeEditMessagesDispatchMapping = (row: MessagesDispatchMappingRow) => {
 };
 
 const handleRateMultipliers = (group: AdminGroup) => {
+  if (authStore.hidesBillingUi) return;
   rateMultipliersGroup.value = group;
   showRateMultipliersModal.value = true;
 };
