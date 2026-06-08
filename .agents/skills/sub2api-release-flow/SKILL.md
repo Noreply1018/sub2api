@@ -52,11 +52,12 @@ If a schema migration is required, apply the migration to the production databas
 3. Implement and validate the change on the development deployment at `8081`.
 4. Build or rebuild the development image from `/home/lh/projects/sub2api`.
 5. Verify `8081` with health checks, targeted API calls, logs, and database checks as appropriate.
-6. Back up production before promotion.
-7. Promote only the validated code/image to `8080`; keep production data directories and environment files in place.
-8. Recreate or restart only the production app container unless a migration requires database coordination.
-9. Verify `8080` health, logs, image identity, and representative data counts.
-10. Commit repository changes after verification when changes were made by Codex.
+6. For frontend or embedded web changes, confirm the running `8081` bundle contains the expected visible text before telling the user to refresh. Prefer `node tools/check_frontend_bundle_text.mjs "关键文案"`.
+7. Back up production before promotion.
+8. Promote only the validated code/image to `8080`; keep production data directories and environment files in place. Prefer `tools/promote_dev_to_prod.sh --yes` for the standard backup, tag, recreate, and verification flow.
+9. Recreate or restart only the production app container unless a migration requires database coordination.
+10. Verify `8080` health, logs, image identity, and representative data counts.
+11. Commit repository changes after verification when changes were made by Codex.
 
 ## Personal/Simple UI Validation
 
@@ -93,6 +94,12 @@ cd /home/lh/projects/sub2api/deploy
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
+Verify frontend bundle text on the running 8081 app:
+
+```bash
+node tools/check_frontend_bundle_text.mjs "调整分组优先级" "全局优先级"
+```
+
 Back up production before promotion:
 
 ```bash
@@ -107,9 +114,13 @@ tar -C /home/lh/apps -czf "$BACKUP_DIR/prod-app-dir.tgz" sub2api/.env sub2api/do
 Promote the validated image without changing production data:
 
 ```bash
-docker tag deploy-sub2api:latest weishaw/sub2api:latest
-cd /home/lh/apps/sub2api
-docker compose up -d --force-recreate sub2api
+tools/promote_dev_to_prod.sh --yes
+```
+
+Preview the promotion steps without changing production:
+
+```bash
+tools/promote_dev_to_prod.sh --dry-run
 ```
 
 Verify production after promotion:
