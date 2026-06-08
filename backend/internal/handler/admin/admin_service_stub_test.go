@@ -632,5 +632,9 @@ func (s *stubAdminService) UpdateAccountGroupPriorities(ctx context.Context, gro
 	return nil
 }
 
+func (s *stubAdminService) RevertAccountProxyFallback(ctx context.Context, id int64) error {
+	return nil
+}
+
 // Ensure stub implements interface.
 var _ service.AdminService = (*stubAdminService)(nil)
