@@ -1,0 +1,7 @@
+interface:
+  display_name: "Sub2API Upstream Sync"
+  short_description: "Safely merge official Sub2API updates"
+  default_prompt: "Use $sub2api-upstream-sync to check upstream updates and merge the official Sub2API changes into local-custom safely."
+
+policy:
+  allow_implicit_invocation: true
