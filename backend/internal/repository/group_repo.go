@@ -10,6 +10,7 @@ import (
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/group"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -23,6 +24,10 @@ type sqlExecutor interface {
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 }
 
+type sqlTxBeginner interface {
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+}
+
 type groupRepository struct {
 	client *dbent.Client
 	sql    sqlExecutor
@@ -34,6 +39,14 @@ func NewGroupRepository(client *dbent.Client, sqlDB *sql.DB) service.GroupReposi
 
 func newGroupRepositoryWithSQL(client *dbent.Client, sqlq sqlExecutor) *groupRepository {
 	return &groupRepository{client: client, sql: sqlq}
+}
+
+func beginTxIfPossible(ctx context.Context, exec sqlExecutor) (*sql.Tx, error) {
+	beginner, ok := exec.(sqlTxBeginner)
+	if !ok {
+		return nil, nil
+	}
+	return beginner.BeginTx(ctx, nil)
 }
 
 func (r *groupRepository) Create(ctx context.Context, groupIn *service.Group) error {
@@ -792,6 +805,66 @@ func (r *groupRepository) BindAccountsToGroup(ctx context.Context, groupID int64
 		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue bind accounts to group failed: group=%d err=%v", groupID, err)
 	}
 
+	return nil
+}
+
+func (r *groupRepository) UpdateAccountGroupPriorities(ctx context.Context, groupID int64, updates []service.AccountGroupPriorityUpdate) error {
+	if len(updates) == 0 {
+		return nil
+	}
+
+	accountIDs := make([]int64, 0, len(updates))
+	priorities := make([]int, 0, len(updates))
+	for _, update := range updates {
+		accountIDs = append(accountIDs, update.AccountID)
+		priorities = append(priorities, update.Priority)
+	}
+
+	tx, err := beginTxIfPossible(ctx, r.sql)
+	if err != nil {
+		return err
+	}
+	exec := r.sql
+	if tx != nil {
+		defer func() { _ = tx.Rollback() }()
+		exec = tx
+	}
+
+	var matched int
+	if err := scanSingleRow(ctx, exec, `
+		SELECT COUNT(*)
+		FROM account_groups
+		WHERE group_id = $1 AND account_id = ANY($2)
+	`, []any{groupID, pq.Array(accountIDs)}, &matched); err != nil {
+		return err
+	}
+	if matched != len(accountIDs) {
+		return infraerrors.BadRequest("ACCOUNT_GROUP_BINDING_NOT_FOUND", "some accounts are not bound to the group")
+	}
+
+	if _, err := exec.ExecContext(ctx, `
+		UPDATE account_groups AS ag
+		SET priority = updates.priority
+		FROM (
+			SELECT
+				unnest($1::bigint[]) AS account_id,
+				unnest($2::integer[]) AS priority
+		) AS updates
+		WHERE ag.group_id = $3
+			AND ag.account_id = updates.account_id
+	`, pq.Array(accountIDs), pq.Array(priorities), groupID); err != nil {
+		return err
+	}
+
+	if tx != nil {
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+
+	if err := enqueueSchedulerOutbox(ctx, r.sql, service.SchedulerOutboxEventGroupChanged, nil, &groupID, nil); err != nil {
+		logger.LegacyPrintf("repository.group", "[SchedulerOutbox] enqueue account group priority update failed: group=%d err=%v", groupID, err)
+	}
 	return nil
 }
 

@@ -70,3 +70,13 @@
 - 不做：不删数据库字段和历史表，不迁移正式数据，不重写 usage 聚合，不把 USD 限额字段迁为 token 限额。
 - 验收：余额为 0 的用户仍可使用有效 API Key 调用；请求完成后 `users.balance` 不变；`usage_logs` 继续记录 token；前端不再暴露余额、充值、账号倍率和分组倍率入口。
 - 验证：2026-06-07 在 8081 开发环境设置 `RUN_MODE=personal`，将 dev 用户余额置为 0 后调用 `/responses` 返回 200，新增 `usage_logs.id=212`，`users.balance` 保持 `0.00000000`；临时耗尽 quota 的 API Key 返回 `429 API_KEY_QUOTA_EXHAUSTED`；单测覆盖 personal 下保留 RPM。
+
+### D004: 分组内账号优先级快速调整
+
+- 状态：review
+- 记录：2026-06-08
+- 目标：管理员可以在某个分组视角下快速调整多个账号的分组内优先级，优先使用指定账号。
+- 范围：后端新增分组账号优先级批量更新接口；前端账号页在分组筛选状态下提供优先级调整入口和弹窗。
+- 不做：不改变账号全局优先级语义，不重写调度算法，不修改数据库结构。
+- 验收：筛选某个分组后可批量修改该分组内多个账号的 `account_groups.priority`；保存后账号列表和调度排序按新的分组内优先级生效；未选中该分组的账号不受影响。
+- 验证：2026-06-08 后端单测覆盖分组内优先级批量更新的转发、重复账号校验；`go test ./internal/service ./internal/handler/admin ./internal/server/routes ./internal/repository`、`pnpm --dir frontend typecheck`、`pnpm --dir frontend build` 均通过。

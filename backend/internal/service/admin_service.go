@@ -64,6 +64,7 @@ type AdminService interface {
 	ClearGroupRPMOverrides(ctx context.Context, groupID int64) error
 	BatchSetGroupRPMOverrides(ctx context.Context, groupID int64, entries []GroupRPMOverrideInput) error
 	UpdateGroupSortOrders(ctx context.Context, updates []GroupSortOrderUpdate) error
+	UpdateAccountGroupPriorities(ctx context.Context, groupID int64, updates []AccountGroupPriorityUpdate) error
 
 	// API Key management (admin)
 	AdminUpdateAPIKeyGroupID(ctx context.Context, keyID int64, groupID *int64) (*AdminUpdateAPIKeyGroupIDResult, error)
@@ -1599,6 +1600,34 @@ func (s *adminServiceImpl) GetAllGroupsByPlatform(ctx context.Context, platform 
 
 func (s *adminServiceImpl) GetGroup(ctx context.Context, id int64) (*Group, error) {
 	return s.groupRepo.GetByID(ctx, id)
+}
+
+func (s *adminServiceImpl) UpdateAccountGroupPriorities(ctx context.Context, groupID int64, updates []AccountGroupPriorityUpdate) error {
+	if groupID <= 0 {
+		return ErrGroupNotFound
+	}
+	if len(updates) == 0 {
+		return infraerrors.BadRequest("EMPTY_ACCOUNT_GROUP_PRIORITY_UPDATES", "priority updates cannot be empty")
+	}
+	if _, err := s.groupRepo.GetByIDLite(ctx, groupID); err != nil {
+		return err
+	}
+
+	seen := make(map[int64]struct{}, len(updates))
+	for _, update := range updates {
+		if update.AccountID <= 0 {
+			return infraerrors.BadRequest("INVALID_ACCOUNT_GROUP_PRIORITY_ACCOUNT", "account_id must be positive")
+		}
+		if update.Priority < 1 {
+			return infraerrors.BadRequest("INVALID_ACCOUNT_GROUP_PRIORITY", "priority must be >= 1")
+		}
+		if _, ok := seen[update.AccountID]; ok {
+			return infraerrors.BadRequest("DUPLICATE_ACCOUNT_GROUP_PRIORITY_ACCOUNT", "duplicate account_id in priority updates")
+		}
+		seen[update.AccountID] = struct{}{}
+	}
+
+	return s.groupRepo.UpdateAccountGroupPriorities(ctx, groupID, updates)
 }
 
 func (s *adminServiceImpl) GetGroupModelsListCandidates(ctx context.Context, id int64, platform string) ([]string, error) {

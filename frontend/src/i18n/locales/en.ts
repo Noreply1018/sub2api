@@ -3045,6 +3045,21 @@ export default {
       schedulableDisabled: 'Scheduling disabled',
       failedToToggleSchedulable: 'Failed to toggle scheduling status',
       groupCountTotal: '{count} groups total',
+      groupPriority: {
+        open: 'Adjust Group Priority',
+        title: 'Adjust Account Priority in Group',
+        groupFallback: 'Current Group',
+        currentPageHint: '{count} account(s) on this page can be adjusted. Lower values are used first.',
+        priority: 'Group Priority',
+        normalize: 'Renumber by Current Order',
+        toTop: 'Move to Top',
+        moveUp: 'Move Up',
+        moveDown: 'Move Down',
+        empty: 'No grouped accounts on this page',
+        selectGroupFirst: 'Filter by one group first',
+        saved: 'Group account priorities saved',
+        failed: 'Failed to save group account priorities'
+      },
       platforms: {
         anthropic: 'Anthropic',
         claude: 'Claude',

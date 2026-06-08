@@ -33,6 +33,8 @@ type GroupRepository interface {
 	GetAccountIDsByGroupIDs(ctx context.Context, groupIDs []int64) ([]int64, error)
 	// BindAccountsToGroup 将多个账号绑定到指定分组
 	BindAccountsToGroup(ctx context.Context, groupID int64, accountIDs []int64) error
+	// UpdateAccountGroupPriorities 批量更新指定分组内账号优先级。
+	UpdateAccountGroupPriorities(ctx context.Context, groupID int64, updates []AccountGroupPriorityUpdate) error
 	// UpdateSortOrders 批量更新分组排序
 	UpdateSortOrders(ctx context.Context, updates []GroupSortOrderUpdate) error
 }
@@ -41,6 +43,12 @@ type GroupRepository interface {
 type GroupSortOrderUpdate struct {
 	ID        int64 `json:"id"`
 	SortOrder int   `json:"sort_order"`
+}
+
+// AccountGroupPriorityUpdate 表示某个账号在指定分组内的优先级更新。
+type AccountGroupPriorityUpdate struct {
+	AccountID int64 `json:"account_id"`
+	Priority  int   `json:"priority"`
 }
 
 // CreateGroupRequest 创建分组请求

@@ -248,6 +248,10 @@ func (s *groupRepoStub) UpdateSortOrders(ctx context.Context, updates []GroupSor
 	return nil
 }
 
+func (s *groupRepoStub) UpdateAccountGroupPriorities(ctx context.Context, groupID int64, updates []AccountGroupPriorityUpdate) error {
+	panic("unexpected UpdateAccountGroupPriorities call")
+}
+
 type deleteGroupAPIKeyRepoStub struct {
 	apiKeyRepoStubForGroupUpdate
 	keys         []string

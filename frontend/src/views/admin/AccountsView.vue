@@ -119,6 +119,12 @@
                         {{ t('admin.accounts.toolActions') }}
                       </div>
                     </div>
+                    <button v-if="selectedGroupForPriority" class="account-tools-menu-item" @click="openGroupPriority">
+                      <span class="account-tools-menu-icon bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300">
+                        <Icon name="sort" size="sm" />
+                      </span>
+                      <span class="flex-1 text-left">{{ t('admin.accounts.groupPriority.open') }}</span>
+                    </button>
                     <button class="account-tools-menu-item" @click="openErrorPassthrough">
                       <span class="account-tools-menu-icon bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
                         <Icon name="shield" size="sm" />
@@ -353,6 +359,13 @@
     </TablePageLayout>
     <CreateAccountModal :show="showCreate" :proxies="proxies" :groups="groups" @close="showCreate = false" @created="reload" />
     <EditAccountModal :show="showEdit" :account="edAcc" :proxies="proxies" :groups="groups" @close="showEdit = false" @updated="handleAccountUpdated" />
+    <GroupAccountPriorityModal
+      :show="showGroupPriority"
+      :group="selectedGroupForPriority"
+      :accounts="accounts"
+      @close="showGroupPriority = false"
+      @save="handleSaveGroupPriority"
+    />
     <ReAuthAccountModal :show="showReAuth" :account="reAuthAcc" @close="closeReAuthModal" @reauthorized="handleAccountUpdated" />
     <AccountTestModal :show="showTest" :account="testingAcc" @close="closeTestModal" />
     <AccountStatsModal :show="showStats" :account="statsAcc" @close="closeStatsModal" />
@@ -400,7 +413,7 @@ import DataTable from '@/components/common/DataTable.vue'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
-import { CreateAccountModal, EditAccountModal, BulkEditAccountModal, SyncFromCrsModal, TempUnschedStatusModal } from '@/components/account'
+import { CreateAccountModal, EditAccountModal, BulkEditAccountModal, GroupAccountPriorityModal, SyncFromCrsModal, TempUnschedStatusModal } from '@/components/account'
 import AccountTableActions from '@/components/admin/account/AccountTableActions.vue'
 import AccountTableFilters from '@/components/admin/account/AccountTableFilters.vue'
 import AccountBulkActionsBar from '@/components/admin/account/AccountBulkActionsBar.vue'
@@ -478,6 +491,7 @@ const showImportData = ref(false)
 const showExportDataDialog = ref(false)
 const includeProxyOnExport = ref(true)
 const showBulkEdit = ref(false)
+const showGroupPriority = ref(false)
 const bulkEditTarget = ref<AccountBulkEditTarget | null>(null)
 const showTempUnsched = ref(false)
 const showDeleteDialog = ref(false)
@@ -505,6 +519,11 @@ const accountToolsDropdownRef = ref<HTMLElement | null>(null)
 const hiddenColumns = reactive<Set<string>>(new Set())
 const DEFAULT_HIDDEN_COLUMNS = ['today_stats', 'proxy', 'notes', 'priority', 'rate_multiplier']
 const HIDDEN_COLUMNS_KEY = 'account-hidden-columns'
+const selectedGroupForPriority = computed(() => {
+  const groupID = Number(params.group)
+  if (!Number.isFinite(groupID) || groupID <= 0) return null
+  return groups.value.find(group => group.id === groupID) ?? null
+})
 
 // Sorting settings
 const ACCOUNT_SORT_STORAGE_KEY = 'account-table-sort'
@@ -1397,6 +1416,32 @@ const openBulkEditFiltered = async () => {
     selectedTypes
   }
   showBulkEdit.value = true
+}
+
+const openGroupPriority = () => {
+  if (!selectedGroupForPriority.value) {
+    appStore.showError(t('admin.accounts.groupPriority.selectGroupFirst'))
+    return
+  }
+  showAccountToolsDropdown.value = false
+  showGroupPriority.value = true
+}
+
+const handleSaveGroupPriority = async (items: Array<{ account_id: number; priority: number }>) => {
+  const group = selectedGroupForPriority.value
+  if (!group) {
+    appStore.showError(t('admin.accounts.groupPriority.selectGroupFirst'))
+    return
+  }
+  try {
+    await adminAPI.groups.updateAccountPriorities(group.id, items)
+    appStore.showSuccess(t('admin.accounts.groupPriority.saved'))
+    showGroupPriority.value = false
+    reload()
+  } catch (error: any) {
+    console.error('Failed to update account group priorities:', error)
+    appStore.showError(error?.message || t('admin.accounts.groupPriority.failed'))
+  }
 }
 
 const handleBulkUpdated = () => {

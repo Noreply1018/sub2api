@@ -3122,6 +3122,21 @@ export default {
       schedulableDisabled: '调度已关闭',
       failedToToggleSchedulable: '切换调度状态失败',
       groupCountTotal: '共 {count} 个分组',
+      groupPriority: {
+        open: '调整分组优先级',
+        title: '调整分组内账号优先级',
+        groupFallback: '当前分组',
+        currentPageHint: '当前页可调整 {count} 个账号；数值越小越优先。',
+        priority: '分组优先级',
+        normalize: '按当前顺序重排',
+        toTop: '置顶',
+        moveUp: '上移',
+        moveDown: '下移',
+        empty: '当前页没有可调整的分组账号',
+        selectGroupFirst: '请先筛选一个具体分组',
+        saved: '分组内账号优先级已保存',
+        failed: '保存分组内账号优先级失败'
+      },
       columns: {
         name: '名称',
         platformType: '平台/类型',

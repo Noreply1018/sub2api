@@ -31,6 +31,9 @@ type groupRepoStubForAdmin struct {
 	listWithFiltersGroups      []Group
 	listWithFiltersResult      *pagination.PaginationResult
 	listWithFiltersErr         error
+
+	priorityGroupID int64
+	priorityUpdates []AccountGroupPriorityUpdate
 }
 
 func (s *groupRepoStubForAdmin) Create(_ context.Context, g *Group) error {
@@ -125,6 +128,12 @@ func (s *groupRepoStubForAdmin) UpdateSortOrders(_ context.Context, _ []GroupSor
 	return nil
 }
 
+func (s *groupRepoStubForAdmin) UpdateAccountGroupPriorities(_ context.Context, groupID int64, updates []AccountGroupPriorityUpdate) error {
+	s.priorityGroupID = groupID
+	s.priorityUpdates = append([]AccountGroupPriorityUpdate(nil), updates...)
+	return nil
+}
+
 func TestAdminService_ListGroups_PassesSortParams(t *testing.T) {
 	repo := &groupRepoStubForAdmin{
 		listWithFiltersGroups: []Group{{ID: 1, Name: "g1"}},
@@ -139,6 +148,34 @@ func TestAdminService_ListGroups_PassesSortParams(t *testing.T) {
 		SortBy:    "account_count",
 		SortOrder: "ASC",
 	}, repo.listWithFiltersParams)
+}
+
+func TestAdminService_UpdateAccountGroupPriorities_ValidatesAndForwards(t *testing.T) {
+	repo := &groupRepoStubForAdmin{getByID: &Group{ID: 10, Name: "g"}}
+	svc := &adminServiceImpl{groupRepo: repo}
+
+	updates := []AccountGroupPriorityUpdate{
+		{AccountID: 101, Priority: 1},
+		{AccountID: 102, Priority: 5},
+	}
+	err := svc.UpdateAccountGroupPriorities(context.Background(), 10, updates)
+
+	require.NoError(t, err)
+	require.Equal(t, int64(10), repo.priorityGroupID)
+	require.Equal(t, updates, repo.priorityUpdates)
+}
+
+func TestAdminService_UpdateAccountGroupPriorities_RejectsDuplicateAccounts(t *testing.T) {
+	repo := &groupRepoStubForAdmin{getByID: &Group{ID: 10, Name: "g"}}
+	svc := &adminServiceImpl{groupRepo: repo}
+
+	err := svc.UpdateAccountGroupPriorities(context.Background(), 10, []AccountGroupPriorityUpdate{
+		{AccountID: 101, Priority: 1},
+		{AccountID: 101, Priority: 2},
+	})
+
+	require.Error(t, err)
+	require.Empty(t, repo.priorityUpdates)
 }
 
 // TestAdminService_CreateGroup_WithImagePricing 测试创建分组时 ImagePrice 字段正确传递
@@ -603,6 +640,10 @@ func (s *groupRepoStubForFallbackCycle) UpdateSortOrders(_ context.Context, _ []
 	return nil
 }
 
+func (s *groupRepoStubForFallbackCycle) UpdateAccountGroupPriorities(_ context.Context, _ int64, _ []AccountGroupPriorityUpdate) error {
+	return nil
+}
+
 type groupRepoStubForInvalidRequestFallback struct {
 	groups  map[int64]*Group
 	created *Group
@@ -675,6 +716,10 @@ func (s *groupRepoStubForInvalidRequestFallback) BindAccountsToGroup(_ context.C
 }
 
 func (s *groupRepoStubForInvalidRequestFallback) UpdateSortOrders(_ context.Context, _ []GroupSortOrderUpdate) error {
+	return nil
+}
+
+func (s *groupRepoStubForInvalidRequestFallback) UpdateAccountGroupPriorities(_ context.Context, _ int64, _ []AccountGroupPriorityUpdate) error {
 	return nil
 }
 

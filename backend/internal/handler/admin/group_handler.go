@@ -161,6 +161,10 @@ type UpdateGroupRequest struct {
 	CopyAccountsFromGroupIDs []int64 `json:"copy_accounts_from_group_ids"`
 }
 
+type UpdateAccountGroupPrioritiesRequest struct {
+	Items []service.AccountGroupPriorityUpdate `json:"items" binding:"required"`
+}
+
 // List handles listing all groups with pagination
 // GET /api/v1/admin/groups
 func (h *GroupHandler) List(c *gin.Context) {
@@ -383,6 +387,29 @@ func (h *GroupHandler) Delete(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"message": "Group deleted successfully"})
+}
+
+// UpdateAccountPriorities handles updating account priorities inside one group.
+// PUT /api/v1/admin/groups/:id/account-priorities
+func (h *GroupHandler) UpdateAccountPriorities(c *gin.Context) {
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid group ID")
+		return
+	}
+
+	var req UpdateAccountGroupPrioritiesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	if err := h.adminService.UpdateAccountGroupPriorities(c.Request.Context(), groupID, req.Items); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"updated": len(req.Items)})
 }
 
 // GetStats handles getting group statistics

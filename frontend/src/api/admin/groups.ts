@@ -211,6 +211,16 @@ export async function updateSortOrder(
   return data
 }
 
+export async function updateAccountPriorities(
+  id: number,
+  items: Array<{ account_id: number; priority: number }>
+): Promise<{ updated: number }> {
+  const { data } = await apiClient.put<{ updated: number }>(`/admin/groups/${id}/account-priorities`, {
+    items
+  })
+  return data
+}
+
 /**
  * Clear all rate multipliers for a group
  * @param id - Group ID
@@ -337,6 +347,7 @@ export const groupsAPI = {
   clearGroupRPMOverrides,
   batchSetGroupRPMOverrides,
   updateSortOrder,
+  updateAccountPriorities,
   getUsageSummary,
   getCapacitySummary
 }
