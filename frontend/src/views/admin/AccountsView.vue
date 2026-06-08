@@ -311,6 +311,11 @@
           <template #cell-priority="{ value }">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ value }}</span>
           </template>
+          <template #cell-group_priority="{ row }">
+            <span class="text-sm text-gray-700 dark:text-gray-300">
+              {{ formatGroupPriority(row) }}
+            </span>
+          </template>
           <template #cell-last_used_at="{ value }">
             <span class="text-sm text-gray-500 dark:text-dark-400">{{ formatRelativeTime(value) }}</span>
           </template>
@@ -519,9 +524,14 @@ const accountToolsDropdownRef = ref<HTMLElement | null>(null)
 const hiddenColumns = reactive<Set<string>>(new Set())
 const DEFAULT_HIDDEN_COLUMNS = ['today_stats', 'proxy', 'notes', 'priority', 'rate_multiplier']
 const HIDDEN_COLUMNS_KEY = 'account-hidden-columns'
-const selectedGroupForPriority = computed(() => {
+const selectedGroupIDForPriority = computed(() => {
   const groupID = Number(params.group)
   if (!Number.isFinite(groupID) || groupID <= 0) return null
+  return groupID
+})
+const selectedGroupForPriority = computed(() => {
+  const groupID = selectedGroupIDForPriority.value
+  if (!groupID) return null
   return groups.value.find(group => group.id === groupID) ?? null
 })
 
@@ -1138,6 +1148,13 @@ function getAntigravityTierClass(row: any): string {
   }
 }
 
+const formatGroupPriority = (account: Account) => {
+  const groupID = selectedGroupIDForPriority.value
+  if (!groupID) return '-'
+  const accountGroup = account.account_groups?.find(entry => entry.group_id === groupID)
+  return accountGroup?.priority ?? '-'
+}
+
 // All available columns
 const allColumns = computed(() => {
   const c = [
@@ -1157,6 +1174,9 @@ const allColumns = computed(() => {
     { key: 'proxy', label: t('admin.accounts.columns.proxy'), sortable: false },
     { key: 'priority', label: t('admin.accounts.columns.priority'), sortable: true },
   )
+  if (selectedGroupIDForPriority.value) {
+    c.push({ key: 'group_priority', label: t('admin.accounts.columns.groupPriority'), sortable: false })
+  }
   if (!authStore.hidesBillingUi) {
     c.push({ key: 'rate_multiplier', label: t('admin.accounts.columns.billingRateMultiplier'), sortable: true })
   }
