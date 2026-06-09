@@ -93,6 +93,9 @@ services:
       # Generate a secure secret: openssl rand -hex 32
       - JWT_SECRET=${JWT_SECRET:-}
       - JWT_EXPIRE_HOUR=${JWT_EXPIRE_HOUR:-24}
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-0}
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-90}
+      - JWT_SESSION_REFRESH_TOKEN_EXPIRE_HOURS=${JWT_SESSION_REFRESH_TOKEN_EXPIRE_HOURS:-24}
 
       # =======================================================================
       # TOTP (2FA) Configuration
@@ -225,12 +228,8 @@ services:
       # Local directory mapping for easy migration
       - ./redis_data:/data
     command: >
-        sh -c '
-          redis-server
-          --save 60 1
-          --appendonly yes
-          --appendfsync everysec
-          ${REDIS_PASSWORD:+--requirepass "$REDIS_PASSWORD"}'
+      redis-server --save 60 1 --appendonly yes --appendfsync everysec
+      ${REDIS_PASSWORD:+--requirepass "$REDIS_PASSWORD"}
     environment:
       - TZ=${TZ:-Asia/Shanghai}
       # REDISCLI_AUTH is used by redis-cli for authentication (safer than -a flag)

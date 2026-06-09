@@ -859,6 +859,10 @@ jwt:
   # - >0: 按分钟生效（优先于 expire_hour）
   # - =0: 回退使用 expire_hour
   access_token_expire_minutes: 0
+  # 勾选“记住我”时的 Refresh Token 有效期（天）
+  refresh_token_expire_days: 90
+  # 未勾选“记住我”时的 Refresh Token 有效期（小时）
+  session_refresh_token_expire_hours: 24
 
 # =============================================================================
 # TOTP (2FA) Configuration

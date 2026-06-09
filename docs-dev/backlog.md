@@ -80,3 +80,13 @@
 - 不做：不改变账号全局优先级语义，不重写调度算法，不修改数据库结构。
 - 验收：筛选某个分组后可批量修改该分组内多个账号的 `account_groups.priority`；保存后账号列表和调度排序按新的分组内优先级生效；未选中该分组的账号不受影响。
 - 验证：2026-06-08 后端单测覆盖分组内优先级批量更新的转发、重复账号校验；`go test ./internal/service ./internal/handler/admin ./internal/server/routes ./internal/repository`、`pnpm --dir frontend typecheck`、`pnpm --dir frontend build` 均通过。
+
+### D005: 登录会话跨 Docker 重启保持
+
+- 状态：review
+- 记录：2026-06-09
+- 目标：修复 Redis 持久化参数未生效导致重启后登录 refresh token 易丢失的问题，并把“记住我”会话延长到更适合个人使用的 90 天。
+- 范围：开发/部署 compose 的 Redis 启动命令；JWT refresh token 有效期环境变量和配置示例；8081 开发环境验证。
+- 不做：不关闭鉴权，不做免密自动登录，不改 8080 正式版容器和正式数据。
+- 验收：8081 Redis 实际配置显示 `appendonly yes`、`appendfsync everysec`、`save 60 1`；登录返回 refresh token，勾选“记住我”后 refresh token TTL 约 90 天；8081 健康检查通过。
+- 验证：2026-06-09 在 8081 开发环境完成；`sub2api-redis-dev` 实际配置为 `appendonly yes`、`appendfsync everysec`、`save 60 1`；`/health` 返回 `{"status":"ok"}`；管理员登录勾选 `remember_me=true` 后返回 refresh token，Redis TTL 为 `7776000` 秒（90.00 天）。
