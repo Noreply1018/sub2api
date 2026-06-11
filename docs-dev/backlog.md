@@ -93,7 +93,7 @@
 
 ### D006: 本地 PostgreSQL 数据目录安全保护
 
-- 状态：review
+- 状态：done
 - 记录：2026-06-11
 - 目标：避免 Docker/WSL 重启或 bind mount 异常时，PostgreSQL 自动初始化空库，或错误挂载到另一个合法数据库集群。
 - 范围：开发 compose、正式版运行 compose、PostgreSQL guard entrypoint、备份/校验/恢复/审计脚本、中文数据安全文档。
