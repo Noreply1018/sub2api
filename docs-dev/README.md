@@ -9,6 +9,7 @@
 3. [frontend-map.md](./frontend-map.md)：前端 API、store、router、页面结构。
 4. [request-flow.md](./request-flow.md)：网关请求从客户端到上游再到 usage 记录的主链路。
 5. [data-models.md](./data-models.md)：核心数据对象和它们之间的关系。
+6. [data-safety.md](./data-safety.md)：本地正式版/调试版的数据保护、备份、校验和恢复流程。
 
 ## 当前本地基线
 

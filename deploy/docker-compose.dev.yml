@@ -78,11 +78,17 @@ services:
     restart: unless-stopped
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+      - ./data:/guard
+      - ./scripts/postgres-guard-entrypoint.sh:/usr/local/bin/postgres-guard-entrypoint.sh:ro
+    entrypoint: ["/usr/local/bin/postgres-guard-entrypoint.sh"]
+    command: ["postgres"]
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-sub2api}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - POSTGRES_DB=${POSTGRES_DB:-sub2api}
       - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_GUARD_DIR=/guard
+      - ALLOW_EMPTY_DATABASE_INIT=${ALLOW_EMPTY_DATABASE_INIT:-false}
       - TZ=${TZ:-Asia/Shanghai}
     networks:
       - sub2api-network
