@@ -29,12 +29,23 @@ PostgreSQL 容器使用 `deploy/scripts/postgres-guard-entrypoint.sh` 包装官�
 - `PG_VERSION` 存在：认为数据库目录有效，允许启动。
 - `PG_VERSION` 缺失且 `.postgres-initialized` 存在：认为已初始化部署的数据目录异常，拒绝启动。
 - `PG_VERSION` 缺失且 `.postgres-initialized` 缺失：允许首次初始化。
+- `.postgres-system-identifier` 存在时，必须与 `pg_controldata` 读取到的 `Database system identifier` 一致，否则拒绝启动。
 - 只有明确设置 `ALLOW_EMPTY_DATABASE_INIT=true` 时，才允许对已有哨兵的空目录初始化。
 
 哨兵文件位置：
 
 - 正式版：`/home/lh/apps/sub2api/data/.postgres-initialized`
 - 调试版：`/home/lh/projects/sub2api/deploy/data/.postgres-initialized`
+
+数据库身份指纹文件位置：
+
+- 正式版：`/home/lh/apps/sub2api/data/.postgres-system-identifier`
+- 调试版：`/home/lh/projects/sub2api/deploy/data/.postgres-system-identifier`
+
+当前记录的身份指纹：
+
+- 正式版：`7647741618421571619`
+- 调试版：`7647476112611979299`
 
 如果 guard 拦截启动，不要直接设置 `ALLOW_EMPTY_DATABASE_INIT=true`。应先检查挂载、路径、权限和备份，确认是否能找回原数据目录。
 
@@ -102,6 +113,7 @@ tools/audit_data_safety.sh
 
 - `PG_VERSION` 是否存在。
 - guard 哨兵是否存在。
+- 当前数据库身份指纹是否与记录值一致。
 - compose 是否启用 guard。
 - 关键表计数。
 - 最近备份目录。
@@ -144,3 +156,10 @@ tools/audit_data_safety.sh
 5. 选择最近通过校验的备份恢复。
 
 只有确认要放弃旧数据并重新建库时，才可以临时设置 `ALLOW_EMPTY_DATABASE_INIT=true`。
+
+如果日志出现 `database system identifier mismatch`：
+
+1. 不要覆盖 `.postgres-system-identifier`。
+2. 检查 Docker bind mount 是否挂到了错误目录或错误数据库集群。
+3. 使用 `tools/audit_data_safety.sh` 查看实际指纹。
+4. 只有确认当前数据库就是新的可信主数据后，才更新 `.postgres-system-identifier`。

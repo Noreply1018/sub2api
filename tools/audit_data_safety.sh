@@ -21,6 +21,30 @@ check_env() {
     printf 'guard sentinel: missing\n'
   fi
 
+  expected_system_id=""
+  if [ -f "$app_dir/data/.postgres-system-identifier" ]; then
+    expected_system_id="$(tr -d '[:space:]' < "$app_dir/data/.postgres-system-identifier")"
+    printf 'expected system id: %s\n' "$expected_system_id"
+  else
+    printf 'expected system id: missing\n'
+  fi
+
+  actual_system_id=""
+  control_tmp="$(mktemp /tmp/sub2api-pg-control.XXXXXX)"
+  if docker exec "$pg_container" pg_controldata /var/lib/postgresql/data >"$control_tmp" 2>/dev/null; then
+    actual_system_id="$(awk -F: '/Database system identifier/ {gsub(/^[ \t]+/, "", $2); print $2; exit}' "$control_tmp")"
+    rm -f "$control_tmp"
+    printf 'actual system id: %s\n' "$actual_system_id"
+    if [ -n "$expected_system_id" ] && [ "$expected_system_id" = "$actual_system_id" ]; then
+      printf 'system id match: ok\n'
+    elif [ -n "$expected_system_id" ]; then
+      printf 'system id match: mismatch\n'
+    fi
+  else
+    rm -f "$control_tmp"
+    printf 'actual system id: unreadable\n'
+  fi
+
   if grep -q 'postgres-guard-entrypoint.sh' "$compose_file"; then
     printf 'compose guard: ok\n'
   else

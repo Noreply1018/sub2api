@@ -90,3 +90,13 @@
 - 不做：不关闭鉴权，不做免密自动登录，不改 8080 正式版容器和正式数据。
 - 验收：8081 Redis 实际配置显示 `appendonly yes`、`appendfsync everysec`、`save 60 1`；登录返回 refresh token，勾选“记住我”后 refresh token TTL 约 90 天；8081 健康检查通过。
 - 验证：2026-06-09 在 8081 开发环境完成；`sub2api-redis-dev` 实际配置为 `appendonly yes`、`appendfsync everysec`、`save 60 1`；`/health` 返回 `{"status":"ok"}`；管理员登录勾选 `remember_me=true` 后返回 refresh token，Redis TTL 为 `7776000` 秒（90.00 天）。
+
+### D006: 本地 PostgreSQL 数据目录安全保护
+
+- 状态：review
+- 记录：2026-06-11
+- 目标：避免 Docker/WSL 重启或 bind mount 异常时，PostgreSQL 自动初始化空库，或错误挂载到另一个合法数据库集群。
+- 范围：开发 compose、正式版运行 compose、PostgreSQL guard entrypoint、备份/校验/恢复/审计脚本、中文数据安全文档。
+- 不做：不迁移到 Docker named volume，不自动恢复 dump，不在未确认时覆盖正式数据，不提交正式版 `.env` 或运行数据目录。
+- 验收：已有哨兵但空数据目录时 Postgres 拒绝启动；数据库身份指纹不一致时拒绝启动；正式版和调试版正常指纹下可健康启动；正式版自动备份可由 user systemd timer 执行；备份支持轻量校验和临时库深度恢复校验。
+- 验证：2026-06-11 在本机 8080/8081 完成；`/health` 均返回 `{"status":"ok"}`；正式版指纹 `7647741618421571619`，调试版指纹 `7647476112611979299`；空目录拦截和错指纹拦截均通过；正式版 systemd 备份生成 `/home/lh/backups/sub2api-auto/prod/20260611-230934` 并校验通过；升级指纹校验后正式版深度备份 `/home/lh/backups/sub2api-auto/prod/20260611-232421` 通过；深度恢复校验可查询关键表计数。
