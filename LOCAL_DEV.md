@@ -24,4 +24,11 @@ curl http://127.0.0.1:8080/health
 curl http://127.0.0.1:8081/health
 ```
 
+默认管理员账号（两套部署相同，首次启动时由 `ADMIN_EMAIL` / `ADMIN_PASSWORD` 自动创建）：
+
+```text
+账号：admin@sub2api.local
+密码：admin123456
+```
+
 日常使用版位于 `~/apps/sub2api`，使用 Docker Desktop 中的 `sub2api` Compose 组；开发调试版位于 `~/projects/sub2api`，使用 Docker Desktop 中的 `deploy` Compose 组。
