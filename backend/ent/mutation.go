@@ -38597,6 +38597,7 @@ type UserMutation struct {
 	email                         *string
 	password_hash                 *string
 	login_key_hash                *string
+	login_key_encrypted           *string
 	role                          *string
 	balance                       *float64
 	addbalance                    *float64
@@ -39003,6 +39004,55 @@ func (m *UserMutation) LoginKeyHashCleared() bool {
 func (m *UserMutation) ResetLoginKeyHash() {
 	m.login_key_hash = nil
 	delete(m.clearedFields, user.FieldLoginKeyHash)
+}
+
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (m *UserMutation) SetLoginKeyEncrypted(s string) {
+	m.login_key_encrypted = &s
+}
+
+// LoginKeyEncrypted returns the value of the "login_key_encrypted" field in the mutation.
+func (m *UserMutation) LoginKeyEncrypted() (r string, exists bool) {
+	v := m.login_key_encrypted
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLoginKeyEncrypted returns the old "login_key_encrypted" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLoginKeyEncrypted(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLoginKeyEncrypted is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLoginKeyEncrypted requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLoginKeyEncrypted: %w", err)
+	}
+	return oldValue.LoginKeyEncrypted, nil
+}
+
+// ClearLoginKeyEncrypted clears the value of the "login_key_encrypted" field.
+func (m *UserMutation) ClearLoginKeyEncrypted() {
+	m.login_key_encrypted = nil
+	m.clearedFields[user.FieldLoginKeyEncrypted] = struct{}{}
+}
+
+// LoginKeyEncryptedCleared returns if the "login_key_encrypted" field was cleared in this mutation.
+func (m *UserMutation) LoginKeyEncryptedCleared() bool {
+	_, ok := m.clearedFields[user.FieldLoginKeyEncrypted]
+	return ok
+}
+
+// ResetLoginKeyEncrypted resets all changes to the "login_key_encrypted" field.
+func (m *UserMutation) ResetLoginKeyEncrypted() {
+	m.login_key_encrypted = nil
+	delete(m.clearedFields, user.FieldLoginKeyEncrypted)
 }
 
 // SetRole sets the "role" field.
@@ -40555,7 +40605,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 24)
+	fields := make([]string, 0, 25)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -40573,6 +40623,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.login_key_hash != nil {
 		fields = append(fields, user.FieldLoginKeyHash)
+	}
+	if m.login_key_encrypted != nil {
+		fields = append(fields, user.FieldLoginKeyEncrypted)
 	}
 	if m.role != nil {
 		fields = append(fields, user.FieldRole)
@@ -40648,6 +40701,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.PasswordHash()
 	case user.FieldLoginKeyHash:
 		return m.LoginKeyHash()
+	case user.FieldLoginKeyEncrypted:
+		return m.LoginKeyEncrypted()
 	case user.FieldRole:
 		return m.Role()
 	case user.FieldBalance:
@@ -40705,6 +40760,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPasswordHash(ctx)
 	case user.FieldLoginKeyHash:
 		return m.OldLoginKeyHash(ctx)
+	case user.FieldLoginKeyEncrypted:
+		return m.OldLoginKeyEncrypted(ctx)
 	case user.FieldRole:
 		return m.OldRole(ctx)
 	case user.FieldBalance:
@@ -40791,6 +40848,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLoginKeyHash(v)
+		return nil
+	case user.FieldLoginKeyEncrypted:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLoginKeyEncrypted(v)
 		return nil
 	case user.FieldRole:
 		v, ok := value.(string)
@@ -41017,6 +41081,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldLoginKeyHash) {
 		fields = append(fields, user.FieldLoginKeyHash)
 	}
+	if m.FieldCleared(user.FieldLoginKeyEncrypted) {
+		fields = append(fields, user.FieldLoginKeyEncrypted)
+	}
 	if m.FieldCleared(user.FieldTotpSecretEncrypted) {
 		fields = append(fields, user.FieldTotpSecretEncrypted)
 	}
@@ -41051,6 +41118,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldLoginKeyHash:
 		m.ClearLoginKeyHash()
+		return nil
+	case user.FieldLoginKeyEncrypted:
+		m.ClearLoginKeyEncrypted()
 		return nil
 	case user.FieldTotpSecretEncrypted:
 		m.ClearTotpSecretEncrypted()
@@ -41092,6 +41162,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldLoginKeyHash:
 		m.ResetLoginKeyHash()
+		return nil
+	case user.FieldLoginKeyEncrypted:
+		m.ResetLoginKeyEncrypted()
 		return nil
 	case user.FieldRole:
 		m.ResetRole()

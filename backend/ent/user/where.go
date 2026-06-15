@@ -85,6 +85,11 @@ func LoginKeyHash(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldLoginKeyHash, v))
 }
 
+// LoginKeyEncrypted applies equality check predicate on the "login_key_encrypted" field. It's identical to LoginKeyEncryptedEQ.
+func LoginKeyEncrypted(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLoginKeyEncrypted, v))
+}
+
 // Role applies equality check predicate on the "role" field. It's identical to RoleEQ.
 func Role(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldRole, v))
@@ -508,6 +513,81 @@ func LoginKeyHashEqualFold(v string) predicate.User {
 // LoginKeyHashContainsFold applies the ContainsFold predicate on the "login_key_hash" field.
 func LoginKeyHashContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldLoginKeyHash, v))
+}
+
+// LoginKeyEncryptedEQ applies the EQ predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedNEQ applies the NEQ predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedIn applies the In predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldLoginKeyEncrypted, vs...))
+}
+
+// LoginKeyEncryptedNotIn applies the NotIn predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldLoginKeyEncrypted, vs...))
+}
+
+// LoginKeyEncryptedGT applies the GT predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedGTE applies the GTE predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedLT applies the LT predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedLTE applies the LTE predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedContains applies the Contains predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedHasPrefix applies the HasPrefix predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedHasSuffix applies the HasSuffix predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedIsNil applies the IsNil predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLoginKeyEncrypted))
+}
+
+// LoginKeyEncryptedNotNil applies the NotNil predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLoginKeyEncrypted))
+}
+
+// LoginKeyEncryptedEqualFold applies the EqualFold predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldLoginKeyEncrypted, v))
+}
+
+// LoginKeyEncryptedContainsFold applies the ContainsFold predicate on the "login_key_encrypted" field.
+func LoginKeyEncryptedContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldLoginKeyEncrypted, v))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.

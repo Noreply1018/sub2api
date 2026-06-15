@@ -49,6 +49,10 @@ export interface ResetLoginKeyResponse {
   login_key: string
 }
 
+export interface SetLoginKeyRequest {
+  login_key: string
+}
+
 /**
  * List all users with pagination
  * @param page - Page number (default: 1)
@@ -146,6 +150,13 @@ export async function update(id: number, updates: UpdateUserRequest): Promise<Ad
 
 export async function resetLoginKey(id: number): Promise<ResetLoginKeyResponse> {
   const { data } = await apiClient.post<ResetLoginKeyResponse>(`/admin/users/${id}/login-key/reset`)
+  return data
+}
+
+export async function setLoginKey(id: number, loginKey: string): Promise<AdminUser> {
+  const { data } = await apiClient.put<AdminUser>(`/admin/users/${id}/login-key`, {
+    login_key: loginKey
+  } satisfies SetLoginKeyRequest)
   return data
 }
 
@@ -395,6 +406,7 @@ export const usersAPI = {
   create,
   update,
   resetLoginKey,
+  setLoginKey,
   clearLoginKey,
   delete: deleteUser,
   updateBalance,

@@ -306,9 +306,27 @@
           </template>
 
           <template #cell-login_key="{ row }">
-            <span :class="['badge', row.has_login_key ? 'badge-green' : 'badge-gray']">
-              {{ row.has_login_key ? t('admin.users.loginKeySet') : t('admin.users.loginKeyNotSet') }}
-            </span>
+            <div class="flex max-w-[220px] items-center gap-2">
+              <code
+                v-if="row.login_key"
+                class="min-w-0 truncate rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 dark:border-dark-700 dark:bg-dark-900 dark:text-dark-100"
+                :title="row.login_key"
+              >
+                {{ row.login_key }}
+              </code>
+              <span v-else :class="['badge', row.has_login_key ? 'badge-warning' : 'badge-gray']">
+                {{ row.has_login_key ? t('admin.users.loginKeyUnavailable') : t('admin.users.loginKeyNotSet') }}
+              </span>
+              <button
+                v-if="row.login_key"
+                type="button"
+                class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-dark-700 dark:hover:text-white"
+                :title="t('admin.users.copyLoginKey')"
+                @click.stop="copyLoginKey(row.login_key)"
+              >
+                <Icon name="copy" size="xs" />
+              </button>
+            </div>
           </template>
 
           <template #cell-groups="{ row }">
@@ -669,11 +687,11 @@
               </button>
 
               <button
-                @click="handleResetLoginKey(user); closeActionMenu()"
+                @click="handleSetLoginKey(user); closeActionMenu()"
                 class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
               >
                 <Icon name="key" size="sm" class="text-gray-400" :stroke-width="2" />
-                {{ t('admin.users.resetLoginKey') }}
+                {{ t('admin.users.setLoginKey') }}
               </button>
 
               <button
@@ -756,10 +774,10 @@
           <div class="mb-4 flex items-start justify-between gap-4">
             <div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ t('admin.users.loginKeyOneTimeTitle') }}
+                {{ t('admin.users.loginKeyDialogTitle') }}
               </h3>
               <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
-                {{ t('admin.users.loginKeyOneTimeHint') }}
+                {{ t('admin.users.loginKeyDialogHint') }}
               </p>
             </div>
             <button
@@ -770,9 +788,28 @@
               <Icon name="x" size="sm" />
             </button>
           </div>
-          <div class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-900">
-            <code class="min-w-0 flex-1 break-all text-sm text-gray-900 dark:text-white">{{ generatedLoginKey }}</code>
-            <button class="btn btn-secondary shrink-0" type="button" @click="copyGeneratedLoginKey">
+          <form class="space-y-4" @submit.prevent="confirmSetLoginKey">
+            <div>
+              <input
+                v-model="loginKeyFormValue"
+                type="text"
+                class="input"
+                autocomplete="off"
+                :placeholder="t('admin.users.loginKeyInputPlaceholder')"
+              />
+            </div>
+            <div class="flex justify-end gap-2">
+              <button class="btn btn-secondary" type="button" @click="closeLoginKeyDialog">
+                {{ t('common.cancel') }}
+              </button>
+              <button class="btn btn-primary" type="submit" :disabled="settingLoginKey">
+                {{ t('common.save') }}
+              </button>
+            </div>
+          </form>
+          <div v-if="loginKeyDialogUser?.login_key" class="mt-4 flex items-center gap-2 rounded border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-900">
+            <code class="min-w-0 flex-1 break-all text-sm text-gray-900 dark:text-white">{{ loginKeyDialogUser.login_key }}</code>
+            <button class="btn btn-secondary shrink-0" type="button" @click="copyLoginKey(loginKeyDialogUser.login_key || '')">
               <Icon name="copy" size="sm" class="mr-1" />
               {{ t('common.copy') }}
             </button>
@@ -1309,11 +1346,13 @@ const showApiKeysModal = ref(false)
 const showAttributesModal = ref(false)
 const showPlatformQuotaModal = ref(false)
 const showLoginKeyDialog = ref(false)
+const settingLoginKey = ref(false)
 const editingUser = ref<AdminUser | null>(null)
 const deletingUser = ref<AdminUser | null>(null)
 const viewingUser = ref<AdminUser | null>(null)
 const platformQuotaUser = ref<AdminUser | null>(null)
-const generatedLoginKey = ref('')
+const loginKeyDialogUser = ref<AdminUser | null>(null)
+const loginKeyFormValue = ref('')
 
 const handlePlatformQuota = (user: AdminUser) => {
   platformQuotaUser.value = user
@@ -1729,16 +1768,30 @@ const closeAllowedGroupsModal = () => {
   allowedGroupsUser.value = null
 }
 
-const handleResetLoginKey = async (user: AdminUser) => {
+const handleSetLoginKey = (user: AdminUser) => {
+  loginKeyDialogUser.value = user
+  loginKeyFormValue.value = user.login_key || ''
+  showLoginKeyDialog.value = true
+}
+
+const confirmSetLoginKey = async () => {
+  if (!loginKeyDialogUser.value) return
+  const nextLoginKey = loginKeyFormValue.value.trim()
+  if (!nextLoginKey) {
+    appStore.showError(t('admin.users.loginKeyRequired'))
+    return
+  }
   try {
-    const result = await adminAPI.users.resetLoginKey(user.id)
-    generatedLoginKey.value = result.login_key
-    showLoginKeyDialog.value = true
-    appStore.showSuccess(t('admin.users.loginKeyResetSuccess'))
-    loadUsers()
+    settingLoginKey.value = true
+    await adminAPI.users.setLoginKey(loginKeyDialogUser.value.id, nextLoginKey)
+    appStore.showSuccess(t('admin.users.loginKeySetSuccess'))
+    closeLoginKeyDialog()
+    await loadUsers()
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.users.loginKeyActionFailed'))
-    console.error('Error resetting login key:', error)
+    console.error('Error setting login key:', error)
+  } finally {
+    settingLoginKey.value = false
   }
 }
 
@@ -1755,11 +1808,13 @@ const handleClearLoginKey = async (user: AdminUser) => {
 
 const closeLoginKeyDialog = () => {
   showLoginKeyDialog.value = false
-  generatedLoginKey.value = ''
+  loginKeyDialogUser.value = null
+  loginKeyFormValue.value = ''
 }
 
-const copyGeneratedLoginKey = async () => {
-  await copyToClipboard(generatedLoginKey.value)
+const copyLoginKey = async (loginKey?: string | null) => {
+  if (!loginKey) return
+  await copyToClipboard(loginKey)
 }
 
 const openGroupReplace = (user: AdminUser, group: { id: number; name: string }) => {

@@ -44,6 +44,7 @@ type AdminUser struct {
 	Notes       string     `json:"notes"`
 	LastUsedAt  *time.Time `json:"last_used_at"`
 	HasLoginKey bool       `json:"has_login_key"`
+	LoginKey    string     `json:"login_key,omitempty"`
 	// GroupRates 用户专属分组倍率配置
 	// map[groupID]rateMultiplier
 	GroupRates map[int64]float64 `json:"group_rates,omitempty"`

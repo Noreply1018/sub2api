@@ -114,6 +114,26 @@ func (_u *UserUpdate) ClearLoginKeyHash() *UserUpdate {
 	return _u
 }
 
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (_u *UserUpdate) SetLoginKeyEncrypted(v string) *UserUpdate {
+	_u.mutation.SetLoginKeyEncrypted(v)
+	return _u
+}
+
+// SetNillableLoginKeyEncrypted sets the "login_key_encrypted" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLoginKeyEncrypted(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetLoginKeyEncrypted(*v)
+	}
+	return _u
+}
+
+// ClearLoginKeyEncrypted clears the value of the "login_key_encrypted" field.
+func (_u *UserUpdate) ClearLoginKeyEncrypted() *UserUpdate {
+	_u.mutation.ClearLoginKeyEncrypted()
+	return _u
+}
+
 // SetRole sets the "role" field.
 func (_u *UserUpdate) SetRole(v string) *UserUpdate {
 	_u.mutation.SetRole(v)
@@ -1019,6 +1039,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.LoginKeyHashCleared() {
 		_spec.ClearField(user.FieldLoginKeyHash, field.TypeString)
 	}
+	if value, ok := _u.mutation.LoginKeyEncrypted(); ok {
+		_spec.SetField(user.FieldLoginKeyEncrypted, field.TypeString, value)
+	}
+	if _u.mutation.LoginKeyEncryptedCleared() {
+		_spec.ClearField(user.FieldLoginKeyEncrypted, field.TypeString)
+	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeString, value)
 	}
@@ -1791,6 +1817,26 @@ func (_u *UserUpdateOne) SetNillableLoginKeyHash(v *string) *UserUpdateOne {
 // ClearLoginKeyHash clears the value of the "login_key_hash" field.
 func (_u *UserUpdateOne) ClearLoginKeyHash() *UserUpdateOne {
 	_u.mutation.ClearLoginKeyHash()
+	return _u
+}
+
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (_u *UserUpdateOne) SetLoginKeyEncrypted(v string) *UserUpdateOne {
+	_u.mutation.SetLoginKeyEncrypted(v)
+	return _u
+}
+
+// SetNillableLoginKeyEncrypted sets the "login_key_encrypted" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLoginKeyEncrypted(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetLoginKeyEncrypted(*v)
+	}
+	return _u
+}
+
+// ClearLoginKeyEncrypted clears the value of the "login_key_encrypted" field.
+func (_u *UserUpdateOne) ClearLoginKeyEncrypted() *UserUpdateOne {
+	_u.mutation.ClearLoginKeyEncrypted()
 	return _u
 }
 
@@ -2728,6 +2774,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.LoginKeyHashCleared() {
 		_spec.ClearField(user.FieldLoginKeyHash, field.TypeString)
+	}
+	if value, ok := _u.mutation.LoginKeyEncrypted(); ok {
+		_spec.SetField(user.FieldLoginKeyEncrypted, field.TypeString, value)
+	}
+	if _u.mutation.LoginKeyEncryptedCleared() {
+		_spec.ClearField(user.FieldLoginKeyEncrypted, field.TypeString)
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeString, value)

@@ -20,6 +20,7 @@ import (
 	dbuser "github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/ent/userallowedgroup"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/lib/pq"
@@ -98,9 +99,12 @@ func (r *userRepository) Create(ctx context.Context, userIn *service.User) error
 	if strings.TrimSpace(userIn.LoginKeyHash) != "" {
 		createOp = createOp.SetLoginKeyHash(strings.TrimSpace(userIn.LoginKeyHash))
 	}
+	if strings.TrimSpace(userIn.LoginKey) != "" {
+		createOp = createOp.SetLoginKeyEncrypted(strings.TrimSpace(userIn.LoginKey))
+	}
 	created, err := createOp.Save(txCtx)
 	if err != nil {
-		return translatePersistenceError(err, nil, service.ErrEmailExists)
+		return translateUserPersistenceError(err, nil)
 	}
 
 	if err := r.syncUserAllowedGroupsWithClient(txCtx, txClient, created.ID, userIn.AllowedGroups); err != nil {
@@ -270,6 +274,11 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 	} else {
 		updateOp = updateOp.ClearLoginKeyHash()
 	}
+	if strings.TrimSpace(userIn.LoginKey) != "" {
+		updateOp = updateOp.SetLoginKeyEncrypted(strings.TrimSpace(userIn.LoginKey))
+	} else {
+		updateOp = updateOp.ClearLoginKeyEncrypted()
+	}
 	if userIn.SignupSource != "" {
 		updateOp = updateOp.SetSignupSource(userIn.SignupSource)
 	}
@@ -284,7 +293,7 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 	}
 	updated, err := updateOp.Save(txCtx)
 	if err != nil {
-		return translatePersistenceError(err, service.ErrUserNotFound, service.ErrEmailExists)
+		return translateUserPersistenceError(err, service.ErrUserNotFound)
 	}
 
 	if err := r.syncUserAllowedGroupsWithClient(txCtx, txClient, updated.ID, userIn.AllowedGroups); err != nil {
@@ -839,14 +848,27 @@ func (r *userRepository) UpdateLoginKeyHash(ctx context.Context, userID int64, l
 	client := clientFromContext(ctx, r.client)
 	update := client.User.UpdateOneID(userID)
 	if loginKeyHash == nil || strings.TrimSpace(*loginKeyHash) == "" {
-		update = update.ClearLoginKeyHash()
+		update = update.ClearLoginKeyHash().ClearLoginKeyEncrypted()
 	} else {
 		update = update.SetLoginKeyHash(strings.TrimSpace(*loginKeyHash))
 	}
 	if _, err := update.Save(ctx); err != nil {
-		return translatePersistenceError(err, service.ErrUserNotFound, nil)
+		return translateUserPersistenceError(err, service.ErrUserNotFound)
 	}
 	return nil
+}
+
+func translateUserPersistenceError(err error, notFound *infraerrors.ApplicationError) error {
+	if err == nil {
+		return nil
+	}
+	if isUniqueConstraintViolation(err) {
+		if strings.Contains(err.Error(), "users_login_key_hash") {
+			return service.ErrLoginKeyExists.WithCause(err)
+		}
+		return service.ErrEmailExists.WithCause(err)
+	}
+	return translatePersistenceError(err, notFound, nil)
 }
 
 func ensureNormalizedEmailAvailableWithClient(ctx context.Context, client *dbent.Client, userID int64, email string) error {

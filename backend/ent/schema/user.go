@@ -47,6 +47,10 @@ func (User) Fields() []ent.Field {
 			MaxLen(64).
 			Optional().
 			Nillable(),
+		field.String("login_key_encrypted").
+			SchemaType(map[string]string{dialect.Postgres: "text"}).
+			Optional().
+			Nillable(),
 		field.String("role").
 			MaxLen(20).
 			Default(domain.RoleUser),

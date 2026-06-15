@@ -234,6 +234,7 @@ func registerUserManagementRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		users.POST("", h.Admin.User.Create)
 		users.PUT("/:id", h.Admin.User.Update)
 		users.DELETE("/:id", h.Admin.User.Delete)
+		users.PUT("/:id/login-key", h.Admin.User.SetLoginKey)
 		users.POST("/:id/login-key/reset", h.Admin.User.ResetLoginKey)
 		users.DELETE("/:id/login-key", h.Admin.User.ClearLoginKey)
 		users.POST("/:id/balance", h.Admin.User.UpdateBalance)

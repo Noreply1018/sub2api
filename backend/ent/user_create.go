@@ -102,6 +102,20 @@ func (_c *UserCreate) SetNillableLoginKeyHash(v *string) *UserCreate {
 	return _c
 }
 
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (_c *UserCreate) SetLoginKeyEncrypted(v string) *UserCreate {
+	_c.mutation.SetLoginKeyEncrypted(v)
+	return _c
+}
+
+// SetNillableLoginKeyEncrypted sets the "login_key_encrypted" field if the given value is not nil.
+func (_c *UserCreate) SetNillableLoginKeyEncrypted(v *string) *UserCreate {
+	if v != nil {
+		_c.SetLoginKeyEncrypted(*v)
+	}
+	return _c
+}
+
 // SetRole sets the "role" field.
 func (_c *UserCreate) SetRole(v string) *UserCreate {
 	_c.mutation.SetRole(v)
@@ -794,6 +808,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldLoginKeyHash, field.TypeString, value)
 		_node.LoginKeyHash = &value
 	}
+	if value, ok := _c.mutation.LoginKeyEncrypted(); ok {
+		_spec.SetField(user.FieldLoginKeyEncrypted, field.TypeString, value)
+		_node.LoginKeyEncrypted = &value
+	}
 	if value, ok := _c.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeString, value)
 		_node.Role = value
@@ -1202,6 +1220,24 @@ func (u *UserUpsert) ClearLoginKeyHash() *UserUpsert {
 	return u
 }
 
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (u *UserUpsert) SetLoginKeyEncrypted(v string) *UserUpsert {
+	u.Set(user.FieldLoginKeyEncrypted, v)
+	return u
+}
+
+// UpdateLoginKeyEncrypted sets the "login_key_encrypted" field to the value that was provided on create.
+func (u *UserUpsert) UpdateLoginKeyEncrypted() *UserUpsert {
+	u.SetExcluded(user.FieldLoginKeyEncrypted)
+	return u
+}
+
+// ClearLoginKeyEncrypted clears the value of the "login_key_encrypted" field.
+func (u *UserUpsert) ClearLoginKeyEncrypted() *UserUpsert {
+	u.SetNull(user.FieldLoginKeyEncrypted)
+	return u
+}
+
 // SetRole sets the "role" field.
 func (u *UserUpsert) SetRole(v string) *UserUpsert {
 	u.Set(user.FieldRole, v)
@@ -1604,6 +1640,27 @@ func (u *UserUpsertOne) UpdateLoginKeyHash() *UserUpsertOne {
 func (u *UserUpsertOne) ClearLoginKeyHash() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearLoginKeyHash()
+	})
+}
+
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (u *UserUpsertOne) SetLoginKeyEncrypted(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetLoginKeyEncrypted(v)
+	})
+}
+
+// UpdateLoginKeyEncrypted sets the "login_key_encrypted" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateLoginKeyEncrypted() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateLoginKeyEncrypted()
+	})
+}
+
+// ClearLoginKeyEncrypted clears the value of the "login_key_encrypted" field.
+func (u *UserUpsertOne) ClearLoginKeyEncrypted() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearLoginKeyEncrypted()
 	})
 }
 
@@ -2221,6 +2278,27 @@ func (u *UserUpsertBulk) UpdateLoginKeyHash() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearLoginKeyHash() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearLoginKeyHash()
+	})
+}
+
+// SetLoginKeyEncrypted sets the "login_key_encrypted" field.
+func (u *UserUpsertBulk) SetLoginKeyEncrypted(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetLoginKeyEncrypted(v)
+	})
+}
+
+// UpdateLoginKeyEncrypted sets the "login_key_encrypted" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateLoginKeyEncrypted() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateLoginKeyEncrypted()
+	})
+}
+
+// ClearLoginKeyEncrypted clears the value of the "login_key_encrypted" field.
+func (u *UserUpsertBulk) ClearLoginKeyEncrypted() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearLoginKeyEncrypted()
 	})
 }
 

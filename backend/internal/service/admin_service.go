@@ -39,6 +39,7 @@ type AdminService interface {
 	CreateUser(ctx context.Context, input *CreateUserInput) (*User, error)
 	UpdateUser(ctx context.Context, id int64, input *UpdateUserInput) (*User, error)
 	ResetUserLoginKey(ctx context.Context, id int64) (*UserLoginKeyResetResult, error)
+	SetUserLoginKey(ctx context.Context, id int64, loginKey string) (*User, error)
 	ClearUserLoginKey(ctx context.Context, id int64) (*User, error)
 	DeleteUser(ctx context.Context, id int64) error
 	UpdateUserBalance(ctx context.Context, userID int64, balance float64, operation string, notes string) (*User, error)
@@ -564,6 +565,7 @@ type adminServiceImpl struct {
 	userSubRepo          UserSubscriptionRepository
 	privacyClientFactory PrivacyClientFactory
 	runtimeBlocker       AccountRuntimeBlocker
+	secretEncryptor      SecretEncryptor
 }
 
 type userGroupRateBatchReader interface {
@@ -590,6 +592,7 @@ func NewAdminService(
 	userSubRepo UserSubscriptionRepository,
 	privacyClientFactory PrivacyClientFactory,
 	runtimeBlocker AccountRuntimeBlocker,
+	secretEncryptor SecretEncryptor,
 ) AdminService {
 	return &adminServiceImpl{
 		userRepo:             userRepo,
@@ -610,6 +613,7 @@ func NewAdminService(
 		userSubRepo:          userSubRepo,
 		privacyClientFactory: privacyClientFactory,
 		runtimeBlocker:       runtimeBlocker,
+		secretEncryptor:      secretEncryptor,
 	}
 }
 
@@ -624,6 +628,7 @@ func (s *adminServiceImpl) ListUsers(ctx context.Context, page, pageSize int, fi
 		userIDs := make([]int64, 0, len(users))
 		for i := range users {
 			userIDs = append(userIDs, users[i].ID)
+			s.decryptAdminLoginKey(&users[i])
 		}
 		lastUsedByUserID, latestErr := s.userRepo.GetLatestUsedAtByUserIDs(ctx, userIDs)
 		if latestErr != nil {
@@ -684,6 +689,7 @@ func (s *adminServiceImpl) GetUser(ctx context.Context, id int64) (*User, error)
 	} else {
 		user.LastUsedAt = lastUsedAt
 	}
+	s.decryptAdminLoginKey(user)
 	// 加载用户专属分组倍率
 	if s.userGroupRateRepo != nil {
 		rates, err := s.userGroupRateRepo.GetByUserID(ctx, id)
@@ -697,7 +703,12 @@ func (s *adminServiceImpl) GetUser(ctx context.Context, id int64) (*User, error)
 }
 
 func (s *adminServiceImpl) GetUserIncludeDeleted(ctx context.Context, id int64) (*User, error) {
-	return s.userRepo.GetByIDIncludeDeleted(ctx, id)
+	user, err := s.userRepo.GetByIDIncludeDeleted(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	s.decryptAdminLoginKey(user)
+	return user, nil
 }
 
 func (s *adminServiceImpl) CreateUser(ctx context.Context, input *CreateUserInput) (*User, error) {
@@ -822,6 +833,7 @@ func (s *adminServiceImpl) UpdateUser(ctx context.Context, id int64, input *Upda
 			s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, user.ID)
 		}
 	}
+	s.decryptAdminLoginKey(user)
 
 	concurrencyDiff := user.Concurrency - oldConcurrency
 	if concurrencyDiff != 0 {
@@ -848,23 +860,44 @@ func (s *adminServiceImpl) UpdateUser(ctx context.Context, id int64, input *Upda
 }
 
 func (s *adminServiceImpl) ResetUserLoginKey(ctx context.Context, id int64) (*UserLoginKeyResetResult, error) {
-	user, err := s.userRepo.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
 	loginKey, err := generateLoginKey()
 	if err != nil {
 		return nil, err
 	}
-	hash := HashLoginKey(loginKey)
-	if err := s.userRepo.UpdateLoginKeyHash(ctx, id, &hash); err != nil {
+	user, err := s.SetUserLoginKey(ctx, id, loginKey)
+	if err != nil {
 		return nil, err
 	}
-	user.LoginKeyHash = hash
 	return &UserLoginKeyResetResult{
 		User:     user,
 		LoginKey: loginKey,
 	}, nil
+}
+
+func (s *adminServiceImpl) SetUserLoginKey(ctx context.Context, id int64, loginKey string) (*User, error) {
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	normalized := strings.TrimSpace(loginKey)
+	hash := HashLoginKey(normalized)
+	if hash == "" {
+		return nil, ErrLoginKeyRequired
+	}
+	if s.secretEncryptor == nil {
+		return nil, fmt.Errorf("login key encryptor is not configured")
+	}
+	encrypted, err := s.secretEncryptor.Encrypt(normalized)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt login key: %w", err)
+	}
+	user.LoginKeyHash = hash
+	user.LoginKey = encrypted
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	user.LoginKey = normalized
+	return user, nil
 }
 
 func (s *adminServiceImpl) ClearUserLoginKey(ctx context.Context, id int64) (*User, error) {
@@ -872,11 +905,25 @@ func (s *adminServiceImpl) ClearUserLoginKey(ctx context.Context, id int64) (*Us
 	if err != nil {
 		return nil, err
 	}
-	if err := s.userRepo.UpdateLoginKeyHash(ctx, id, nil); err != nil {
+	user.LoginKeyHash = ""
+	user.LoginKey = ""
+	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
 	}
-	user.LoginKeyHash = ""
 	return user, nil
+}
+
+func (s *adminServiceImpl) decryptAdminLoginKey(user *User) {
+	if user == nil || strings.TrimSpace(user.LoginKey) == "" || s.secretEncryptor == nil {
+		return
+	}
+	plaintext, err := s.secretEncryptor.Decrypt(user.LoginKey)
+	if err != nil {
+		logger.LegacyPrintf("service.admin", "failed to decrypt login key display copy: user_id=%d err=%v", user.ID, err)
+		user.LoginKey = ""
+		return
+	}
+	user.LoginKey = plaintext
 }
 
 func generateLoginKey() (string, error) {

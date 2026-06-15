@@ -179,6 +179,11 @@ func (s *stubAdminService) ResetUserLoginKey(ctx context.Context, id int64) (*se
 	return &service.UserLoginKeyResetResult{User: &user, LoginKey: "lk-test"}, nil
 }
 
+func (s *stubAdminService) SetUserLoginKey(ctx context.Context, id int64, loginKey string) (*service.User, error) {
+	user := service.User{ID: id, Email: "updated@example.com", Status: service.StatusActive, LoginKeyHash: service.HashLoginKey(loginKey), LoginKey: loginKey}
+	return &user, nil
+}
+
 func (s *stubAdminService) ClearUserLoginKey(ctx context.Context, id int64) (*service.User, error) {
 	user := service.User{ID: id, Email: "updated@example.com", Status: service.StatusActive}
 	return &user, nil

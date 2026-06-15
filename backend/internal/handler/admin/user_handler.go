@@ -96,6 +96,10 @@ type ResetLoginKeyResponse struct {
 	LoginKey string         `json:"login_key"`
 }
 
+type SetLoginKeyRequest struct {
+	LoginKey string `json:"login_key" binding:"required"`
+}
+
 type BindUserAuthIdentityChannelRequest struct {
 	Channel        string         `json:"channel"`
 	ChannelAppID   string         `json:"channel_app_id"`
@@ -335,6 +339,30 @@ func (h *UserHandler) ResetLoginKey(c *gin.Context) {
 		User:     dto.UserFromServiceAdmin(result.User),
 		LoginKey: result.LoginKey,
 	})
+}
+
+// SetLoginKey sets a user's homepage login key to the administrator-provided value.
+// PUT /api/v1/admin/users/:id/login-key
+func (h *UserHandler) SetLoginKey(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	var req SetLoginKeyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	user, err := h.adminService.SetUserLoginKey(c.Request.Context(), userID, req.LoginKey)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, dto.UserFromServiceAdmin(user))
 }
 
 // ClearLoginKey clears a user's homepage login key.

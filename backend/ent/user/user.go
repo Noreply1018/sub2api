@@ -27,6 +27,8 @@ const (
 	FieldPasswordHash = "password_hash"
 	// FieldLoginKeyHash holds the string denoting the login_key_hash field in the database.
 	FieldLoginKeyHash = "login_key_hash"
+	// FieldLoginKeyEncrypted holds the string denoting the login_key_encrypted field in the database.
+	FieldLoginKeyEncrypted = "login_key_encrypted"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
 	// FieldBalance holds the string denoting the balance field in the database.
@@ -200,6 +202,7 @@ var Columns = []string{
 	FieldEmail,
 	FieldPasswordHash,
 	FieldLoginKeyHash,
+	FieldLoginKeyEncrypted,
 	FieldRole,
 	FieldBalance,
 	FieldConcurrency,
@@ -328,6 +331,11 @@ func ByPasswordHash(opts ...sql.OrderTermOption) OrderOption {
 // ByLoginKeyHash orders the results by the login_key_hash field.
 func ByLoginKeyHash(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLoginKeyHash, opts...).ToFunc()
+}
+
+// ByLoginKeyEncrypted orders the results by the login_key_encrypted field.
+func ByLoginKeyEncrypted(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLoginKeyEncrypted, opts...).ToFunc()
 }
 
 // ByRole orders the results by the role field.
