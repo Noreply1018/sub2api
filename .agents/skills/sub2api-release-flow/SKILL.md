@@ -1,9 +1,9 @@
 ---
 name: sub2api-release-flow
-description: Use for this sub2api fork when promoting validated changes from the 8081 development/debug deployment to the 8080 production deployment, rebuilding or retagging Docker images, checking the two local Compose environments, planning releases, or handling requests that mention dev-to-prod migration, formal version, 8081, 8080, sub2api-dev, sub2api, deploy/docker-compose.dev.yml, or /home/lh/apps/sub2api. Enforces preserving production data by default.
+description: Use for this sub2api-local fork when promoting validated changes from the 8081 development/debug deployment to the 8080 production deployment, rebuilding or retagging Docker images, checking the two local Compose environments, planning releases, or handling requests that mention dev-to-prod migration, formal version, 8081, 8080, sub2api-dev, sub2api, deploy/docker-compose.dev.yml, or /home/lh/apps/sub2api. Enforces preserving production data by default.
 ---
 
-# Sub2API Release Flow
+# sub2api-local Release Flow
 
 ## Overview
 
@@ -47,8 +47,8 @@ If a schema migration is required, apply the migration to the production databas
 
 ## Standard Workflow
 
-1. Read the repo context before nontrivial work: `LOCAL_DEV.md`, `docs-dev/README.md`, and the relevant `docs-dev/*` page.
-2. Record complex feature work in `docs-dev/backlog.md` before implementation when it touches gateway, billing/usage, auth, permissions, payment, or database behavior.
+1. Read the repo context before nontrivial work: `README.md`, `docs/local/README.md`, `docs/local/dev/README.md`, and the relevant `docs/local/dev/*` page.
+2. Record complex feature work in `docs/local/dev/backlog.md` before implementation when it touches gateway, billing/usage, auth, permissions, payment, or database behavior.
 3. Implement and validate the change on the development deployment at `8081`.
 4. Build or rebuild the development image from `/home/lh/projects/sub2api`.
 5. Verify `8081` with health checks, targeted API calls, logs, and database checks as appropriate.

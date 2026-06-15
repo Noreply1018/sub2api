@@ -1,13 +1,13 @@
 ---
 name: sub2api-upstream-sync
-description: Use for this sub2api fork when checking Wei-Shaw/sub2api upstream updates, comparing official tags or upstream/main with local-custom, planning or performing upstream merges into this local fork, preserving local customization, validating the 8081 development deployment after an upstream sync, or handling requests that mention upstream sync, official version updates, fork merge, local-custom, origin/upstream divergence, or merging official sub2api releases. Does not promote to 8080 production.
+description: Use for this sub2api-local fork when checking Wei-Shaw/sub2api upstream updates, comparing official tags or upstream/main with local-custom, planning or performing upstream merges into this local fork, preserving local customization, validating the 8081 development deployment after an upstream sync, or handling requests that mention upstream sync, official version updates, fork merge, local-custom, origin/upstream divergence, or merging official sub2api releases. Does not promote to 8080 production.
 ---
 
-# Sub2API Upstream Sync
+# sub2api-local Upstream Sync
 
 ## Scope
 
-Use this skill to safely bring official `Wei-Shaw/sub2api` changes into this local second-development fork.
+Use this skill to safely bring official `Wei-Shaw/sub2api` changes into `sub2api-local`.
 
 This skill covers:
 
@@ -29,7 +29,7 @@ This skill does not cover promotion to the 8080 production deployment. For dev-t
 - Development deployment: `http://127.0.0.1:8081`
 - Production deployment: `http://127.0.0.1:8080`
 
-Before nontrivial sync work, read `LOCAL_DEV.md` and `docs-dev/README.md`. If the task may restart services or mentions 8081/8080, also read `.agents/skills/sub2api-release-flow/SKILL.md`.
+Before nontrivial sync work, read `README.md`, `docs/local/README.md`, and `docs/local/dev/README.md`. If the task may restart services or mentions 8081/8080, also read `.agents/skills/sub2api-release-flow/SKILL.md`.
 
 ## Safety Rules
 
@@ -45,8 +45,9 @@ Before nontrivial sync work, read `LOCAL_DEV.md` and `docs-dev/README.md`. If th
 
 Preserve these unless the user explicitly asks to remove them:
 
-- `LOCAL_DEV.md`
-- `docs-dev/**`
+- `README.md`
+- `docs/local/**`
+- `docs/upstream/**`
 - `.agents/skills/**`
 - `tools/promote_dev_to_prod.sh`
 - `tools/visual_check_personal_usage.mjs`

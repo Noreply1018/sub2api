@@ -12,7 +12,7 @@
 
 当前远端和分支：
 
-- `origin`: `git@github.com:Noreply1018/sub2api.git`
+- `origin`: `git@github.com:Noreply1018/sub2api-local.git`
 - `upstream`: `https://github.com/Wei-Shaw/sub2api.git`
 - 本地开发分支：`local-custom`
 
