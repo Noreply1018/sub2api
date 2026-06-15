@@ -174,6 +174,16 @@ func (s *stubAdminService) UpdateUser(ctx context.Context, id int64, input *serv
 	return &user, nil
 }
 
+func (s *stubAdminService) ResetUserLoginKey(ctx context.Context, id int64) (*service.UserLoginKeyResetResult, error) {
+	user := service.User{ID: id, Email: "updated@example.com", Status: service.StatusActive, LoginKeyHash: service.HashLoginKey("lk-test")}
+	return &service.UserLoginKeyResetResult{User: &user, LoginKey: "lk-test"}, nil
+}
+
+func (s *stubAdminService) ClearUserLoginKey(ctx context.Context, id int64) (*service.User, error) {
+	user := service.User{ID: id, Email: "updated@example.com", Status: service.StatusActive}
+	return &user, nil
+}
+
 func (s *stubAdminService) DeleteUser(ctx context.Context, id int64) error {
 	return nil
 }

@@ -94,6 +94,26 @@ func (_u *UserUpdate) SetNillablePasswordHash(v *string) *UserUpdate {
 	return _u
 }
 
+// SetLoginKeyHash sets the "login_key_hash" field.
+func (_u *UserUpdate) SetLoginKeyHash(v string) *UserUpdate {
+	_u.mutation.SetLoginKeyHash(v)
+	return _u
+}
+
+// SetNillableLoginKeyHash sets the "login_key_hash" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLoginKeyHash(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetLoginKeyHash(*v)
+	}
+	return _u
+}
+
+// ClearLoginKeyHash clears the value of the "login_key_hash" field.
+func (_u *UserUpdate) ClearLoginKeyHash() *UserUpdate {
+	_u.mutation.ClearLoginKeyHash()
+	return _u
+}
+
 // SetRole sets the "role" field.
 func (_u *UserUpdate) SetRole(v string) *UserUpdate {
 	_u.mutation.SetRole(v)
@@ -938,6 +958,11 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LoginKeyHash(); ok {
+		if err := user.LoginKeyHashValidator(v); err != nil {
+			return &ValidationError{Name: "login_key_hash", err: fmt.Errorf(`ent: validator failed for field "User.login_key_hash": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
@@ -987,6 +1012,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.LoginKeyHash(); ok {
+		_spec.SetField(user.FieldLoginKeyHash, field.TypeString, value)
+	}
+	if _u.mutation.LoginKeyHashCleared() {
+		_spec.ClearField(user.FieldLoginKeyHash, field.TypeString)
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeString, value)
@@ -1740,6 +1771,26 @@ func (_u *UserUpdateOne) SetNillablePasswordHash(v *string) *UserUpdateOne {
 	if v != nil {
 		_u.SetPasswordHash(*v)
 	}
+	return _u
+}
+
+// SetLoginKeyHash sets the "login_key_hash" field.
+func (_u *UserUpdateOne) SetLoginKeyHash(v string) *UserUpdateOne {
+	_u.mutation.SetLoginKeyHash(v)
+	return _u
+}
+
+// SetNillableLoginKeyHash sets the "login_key_hash" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLoginKeyHash(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetLoginKeyHash(*v)
+	}
+	return _u
+}
+
+// ClearLoginKeyHash clears the value of the "login_key_hash" field.
+func (_u *UserUpdateOne) ClearLoginKeyHash() *UserUpdateOne {
+	_u.mutation.ClearLoginKeyHash()
 	return _u
 }
 
@@ -2600,6 +2651,11 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LoginKeyHash(); ok {
+		if err := user.LoginKeyHashValidator(v); err != nil {
+			return &ValidationError{Name: "login_key_hash", err: fmt.Errorf(`ent: validator failed for field "User.login_key_hash": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Role(); ok {
 		if err := user.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
@@ -2666,6 +2722,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.LoginKeyHash(); ok {
+		_spec.SetField(user.FieldLoginKeyHash, field.TypeString, value)
+	}
+	if _u.mutation.LoginKeyHashCleared() {
+		_spec.ClearField(user.FieldLoginKeyHash, field.TypeString)
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeString, value)

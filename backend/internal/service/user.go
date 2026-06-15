@@ -17,6 +17,7 @@ type User struct {
 	AvatarByteSize int
 	AvatarSHA256   string
 	PasswordHash   string
+	LoginKeyHash   string
 	Role           string
 	Balance        float64
 	Concurrency    int

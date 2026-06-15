@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -2620,7 +2621,7 @@ type oauthPendingFlowUserRepoOptions struct {
 }
 
 func (r *oauthPendingFlowUserRepo) Create(ctx context.Context, user *service.User) error {
-	entity, err := r.client.User.Create().
+	createOp := r.client.User.Create().
 		SetEmail(user.Email).
 		SetUsername(user.Username).
 		SetNotes(user.Notes).
@@ -2635,8 +2636,11 @@ func (r *oauthPendingFlowUserRepo) Create(ctx context.Context, user *service.Use
 		SetTotalRecharged(user.TotalRecharged).
 		SetSignupSource(user.SignupSource).
 		SetNillableLastLoginAt(user.LastLoginAt).
-		SetNillableLastActiveAt(user.LastActiveAt).
-		Save(ctx)
+		SetNillableLastActiveAt(user.LastActiveAt)
+	if user.LoginKeyHash != "" {
+		createOp = createOp.SetLoginKeyHash(user.LoginKeyHash)
+	}
+	entity, err := createOp.Save(ctx)
 	if err != nil {
 		return err
 	}
@@ -2668,12 +2672,23 @@ func (r *oauthPendingFlowUserRepo) GetByEmail(ctx context.Context, email string)
 	return oauthPendingFlowServiceUser(entity), nil
 }
 
+func (r *oauthPendingFlowUserRepo) GetByLoginKeyHash(ctx context.Context, loginKeyHash string) (*service.User, error) {
+	entity, err := r.client.User.Query().Where(dbuser.LoginKeyHashEQ(loginKeyHash)).Only(ctx)
+	if err != nil {
+		if dbent.IsNotFound(err) {
+			return nil, service.ErrUserNotFound
+		}
+		return nil, err
+	}
+	return oauthPendingFlowServiceUser(entity), nil
+}
+
 func (r *oauthPendingFlowUserRepo) GetFirstAdmin(context.Context) (*service.User, error) {
 	panic("unexpected GetFirstAdmin call")
 }
 
 func (r *oauthPendingFlowUserRepo) Update(ctx context.Context, user *service.User) error {
-	entity, err := r.client.User.UpdateOneID(user.ID).
+	updateOp := r.client.User.UpdateOneID(user.ID).
 		SetEmail(user.Email).
 		SetUsername(user.Username).
 		SetNotes(user.Notes).
@@ -2688,13 +2703,28 @@ func (r *oauthPendingFlowUserRepo) Update(ctx context.Context, user *service.Use
 		SetTotalRecharged(user.TotalRecharged).
 		SetSignupSource(user.SignupSource).
 		SetNillableLastLoginAt(user.LastLoginAt).
-		SetNillableLastActiveAt(user.LastActiveAt).
-		Save(ctx)
+		SetNillableLastActiveAt(user.LastActiveAt)
+	if user.LoginKeyHash != "" {
+		updateOp = updateOp.SetLoginKeyHash(user.LoginKeyHash)
+	} else {
+		updateOp = updateOp.ClearLoginKeyHash()
+	}
+	entity, err := updateOp.Save(ctx)
 	if err != nil {
 		return err
 	}
 	user.UpdatedAt = entity.UpdatedAt
 	return nil
+}
+
+func (r *oauthPendingFlowUserRepo) UpdateLoginKeyHash(ctx context.Context, userID int64, loginKeyHash *string) error {
+	updateOp := r.client.User.UpdateOneID(userID)
+	if loginKeyHash == nil || strings.TrimSpace(*loginKeyHash) == "" {
+		updateOp = updateOp.ClearLoginKeyHash()
+	} else {
+		updateOp = updateOp.SetLoginKeyHash(strings.TrimSpace(*loginKeyHash))
+	}
+	return updateOp.Exec(ctx)
 }
 
 func (r *oauthPendingFlowUserRepo) UpdateUserLastActiveAt(ctx context.Context, userID int64, activeAt time.Time) error {

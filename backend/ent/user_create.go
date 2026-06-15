@@ -88,6 +88,20 @@ func (_c *UserCreate) SetPasswordHash(v string) *UserCreate {
 	return _c
 }
 
+// SetLoginKeyHash sets the "login_key_hash" field.
+func (_c *UserCreate) SetLoginKeyHash(v string) *UserCreate {
+	_c.mutation.SetLoginKeyHash(v)
+	return _c
+}
+
+// SetNillableLoginKeyHash sets the "login_key_hash" field if the given value is not nil.
+func (_c *UserCreate) SetNillableLoginKeyHash(v *string) *UserCreate {
+	if v != nil {
+		_c.SetLoginKeyHash(*v)
+	}
+	return _c
+}
+
 // SetRole sets the "role" field.
 func (_c *UserCreate) SetRole(v string) *UserCreate {
 	_c.mutation.SetRole(v)
@@ -665,6 +679,11 @@ func (_c *UserCreate) check() error {
 			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.LoginKeyHash(); ok {
+		if err := user.LoginKeyHashValidator(v); err != nil {
+			return &ValidationError{Name: "login_key_hash", err: fmt.Errorf(`ent: validator failed for field "User.login_key_hash": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
 	}
@@ -770,6 +789,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
 		_node.PasswordHash = value
+	}
+	if value, ok := _c.mutation.LoginKeyHash(); ok {
+		_spec.SetField(user.FieldLoginKeyHash, field.TypeString, value)
+		_node.LoginKeyHash = &value
 	}
 	if value, ok := _c.mutation.Role(); ok {
 		_spec.SetField(user.FieldRole, field.TypeString, value)
@@ -1161,6 +1184,24 @@ func (u *UserUpsert) UpdatePasswordHash() *UserUpsert {
 	return u
 }
 
+// SetLoginKeyHash sets the "login_key_hash" field.
+func (u *UserUpsert) SetLoginKeyHash(v string) *UserUpsert {
+	u.Set(user.FieldLoginKeyHash, v)
+	return u
+}
+
+// UpdateLoginKeyHash sets the "login_key_hash" field to the value that was provided on create.
+func (u *UserUpsert) UpdateLoginKeyHash() *UserUpsert {
+	u.SetExcluded(user.FieldLoginKeyHash)
+	return u
+}
+
+// ClearLoginKeyHash clears the value of the "login_key_hash" field.
+func (u *UserUpsert) ClearLoginKeyHash() *UserUpsert {
+	u.SetNull(user.FieldLoginKeyHash)
+	return u
+}
+
 // SetRole sets the "role" field.
 func (u *UserUpsert) SetRole(v string) *UserUpsert {
 	u.Set(user.FieldRole, v)
@@ -1542,6 +1583,27 @@ func (u *UserUpsertOne) SetPasswordHash(v string) *UserUpsertOne {
 func (u *UserUpsertOne) UpdatePasswordHash() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdatePasswordHash()
+	})
+}
+
+// SetLoginKeyHash sets the "login_key_hash" field.
+func (u *UserUpsertOne) SetLoginKeyHash(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetLoginKeyHash(v)
+	})
+}
+
+// UpdateLoginKeyHash sets the "login_key_hash" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateLoginKeyHash() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateLoginKeyHash()
+	})
+}
+
+// ClearLoginKeyHash clears the value of the "login_key_hash" field.
+func (u *UserUpsertOne) ClearLoginKeyHash() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearLoginKeyHash()
 	})
 }
 
@@ -2138,6 +2200,27 @@ func (u *UserUpsertBulk) SetPasswordHash(v string) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdatePasswordHash() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdatePasswordHash()
+	})
+}
+
+// SetLoginKeyHash sets the "login_key_hash" field.
+func (u *UserUpsertBulk) SetLoginKeyHash(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetLoginKeyHash(v)
+	})
+}
+
+// UpdateLoginKeyHash sets the "login_key_hash" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateLoginKeyHash() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateLoginKeyHash()
+	})
+}
+
+// ClearLoginKeyHash clears the value of the "login_key_hash" field.
+func (u *UserUpsertBulk) ClearLoginKeyHash() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearLoginKeyHash()
 	})
 }
 

@@ -39,10 +39,16 @@ func (s *userRepoStubForGroupUpdate) GetByID(context.Context, int64) (*User, err
 func (s *userRepoStubForGroupUpdate) GetByEmail(context.Context, string) (*User, error) {
 	panic("unexpected")
 }
+func (s *userRepoStubForGroupUpdate) GetByLoginKeyHash(context.Context, string) (*User, error) {
+	panic("unexpected")
+}
 func (s *userRepoStubForGroupUpdate) GetFirstAdmin(context.Context) (*User, error) {
 	panic("unexpected")
 }
 func (s *userRepoStubForGroupUpdate) Update(context.Context, *User) error { panic("unexpected") }
+func (s *userRepoStubForGroupUpdate) UpdateLoginKeyHash(context.Context, int64, *string) error {
+	panic("unexpected")
+}
 func (s *userRepoStubForGroupUpdate) Delete(context.Context, int64) error { panic("unexpected") }
 func (s *userRepoStubForGroupUpdate) GetUserAvatar(context.Context, int64) (*UserAvatar, error) {
 	panic("unexpected")

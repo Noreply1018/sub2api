@@ -91,6 +91,11 @@ type BindUserAuthIdentityRequest struct {
 	Channel         *BindUserAuthIdentityChannelRequest `json:"channel"`
 }
 
+type ResetLoginKeyResponse struct {
+	User     *dto.AdminUser `json:"user"`
+	LoginKey string         `json:"login_key"`
+}
+
 type BindUserAuthIdentityChannelRequest struct {
 	Channel        string         `json:"channel"`
 	ChannelAppID   string         `json:"channel_app_id"`
@@ -303,6 +308,45 @@ func (h *UserHandler) Update(c *gin.Context) {
 		AllowedGroups: req.AllowedGroups,
 		GroupRates:    req.GroupRates,
 	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, dto.UserFromServiceAdmin(user))
+}
+
+// ResetLoginKey resets a user's homepage login key and returns the plaintext key once.
+// POST /api/v1/admin/users/:id/login-key/reset
+func (h *UserHandler) ResetLoginKey(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	result, err := h.adminService.ResetUserLoginKey(c.Request.Context(), userID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, ResetLoginKeyResponse{
+		User:     dto.UserFromServiceAdmin(result.User),
+		LoginKey: result.LoginKey,
+	})
+}
+
+// ClearLoginKey clears a user's homepage login key.
+// DELETE /api/v1/admin/users/:id/login-key
+func (h *UserHandler) ClearLoginKey(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	user, err := h.adminService.ClearUserLoginKey(c.Request.Context(), userID)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

@@ -68,6 +68,10 @@ func (s *userRepoStub) GetByEmail(ctx context.Context, email string) (*User, err
 	return nil, ErrUserNotFound
 }
 
+func (s *userRepoStub) GetByLoginKeyHash(ctx context.Context, loginKeyHash string) (*User, error) {
+	return nil, ErrUserNotFound
+}
+
 func (s *userRepoStub) GetFirstAdmin(ctx context.Context) (*User, error) {
 	panic("unexpected GetFirstAdmin call")
 }
@@ -79,6 +83,18 @@ func (s *userRepoStub) Update(ctx context.Context, user *User) error {
 	}
 	s.usersByEmail[user.Email] = user
 	s.user = user
+	return nil
+}
+
+func (s *userRepoStub) UpdateLoginKeyHash(ctx context.Context, userID int64, loginKeyHash *string) error {
+	if s.user == nil || s.user.ID != userID {
+		return ErrUserNotFound
+	}
+	if loginKeyHash == nil {
+		s.user.LoginKeyHash = ""
+	} else {
+		s.user.LoginKeyHash = *loginKeyHash
+	}
 	return nil
 }
 

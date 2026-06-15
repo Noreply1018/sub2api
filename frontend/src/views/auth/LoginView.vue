@@ -12,57 +12,34 @@
       </div>
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-5">
-        <!-- Email Input -->
+        <!-- Login Key Input -->
         <div>
-          <label for="email" class="input-label">
-            {{ t('auth.emailLabel') }}
+          <label for="login_key" class="input-label">
+            {{ t('auth.loginKeyLabel') }}
           </label>
           <div class="relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="mail" size="md" class="text-gray-400 dark:text-dark-500" />
+              <Icon name="key" size="md" class="text-gray-400 dark:text-dark-500" />
             </div>
             <input
-              id="email"
-              v-model="formData.email"
-              type="email"
+              id="login_key"
+              v-model="formData.login_key"
+              :type="showLoginKey ? 'text' : 'password'"
               required
               autofocus
-              autocomplete="email"
-              :disabled="authActionDisabled"
-              class="input pl-11"
-              :class="{ 'input-error': errors.email }"
-              :placeholder="t('auth.emailPlaceholder')"
-            />
-          </div>
-        </div>
-
-        <!-- Password Input -->
-        <div>
-          <label for="password" class="input-label">
-            {{ t('auth.passwordLabel') }}
-          </label>
-          <div class="relative">
-            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="lock" size="md" class="text-gray-400 dark:text-dark-500" />
-            </div>
-            <input
-              id="password"
-              v-model="formData.password"
-              :type="showPassword ? 'text' : 'password'"
-              required
               autocomplete="current-password"
               :disabled="authActionDisabled"
               class="input pl-11 pr-11"
-              :class="{ 'input-error': errors.password }"
-              :placeholder="t('auth.passwordPlaceholder')"
+              :class="{ 'input-error': errors.login_key }"
+              :placeholder="t('auth.loginKeyPlaceholder')"
             />
             <button
               type="button"
-              @click="showPassword = !showPassword"
+              @click="showLoginKey = !showLoginKey"
               :disabled="authActionDisabled"
               class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-dark-300"
             >
-              <Icon v-if="showPassword" name="eyeOff" size="md" />
+              <Icon v-if="showLoginKey" name="eyeOff" size="md" />
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
@@ -76,13 +53,6 @@
               />
               <span>{{ t('auth.rememberMe') }}</span>
             </label>
-            <router-link
-              v-if="passwordResetEnabled && !backendModeEnabled"
-              to="/forgot-password"
-              class="text-sm font-medium text-primary-600 transition-colors hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              {{ t('auth.forgotPassword') }}
-            </router-link>
           </div>
         </div>
 
@@ -238,7 +208,7 @@ const appStore = useAppStore()
 
 const isLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
-const showPassword = ref<boolean>(false)
+const showLoginKey = ref<boolean>(false)
 const publicSettingsLoaded = ref<boolean>(false)
 
 // Public settings
@@ -272,19 +242,17 @@ const totpUserEmailMasked = ref<string>('')
 const totpModalRef = ref<InstanceType<typeof TotpLoginModal> | null>(null)
 
 const formData = reactive({
-  email: '',
-  password: '',
+  login_key: '',
   remember_me: true
 })
 
 const errors = reactive({
-  email: '',
-  password: '',
+  login_key: '',
   turnstile: ''
 })
 
 const validationToastMessage = computed(
-  () => errors.email || errors.password || errors.turnstile || ''
+  () => errors.login_key || errors.turnstile || ''
 )
 
 const agreementGateActive = computed(
@@ -406,7 +374,7 @@ function rejectLoginAgreement(): void {
   localStorage.removeItem(LOGIN_AGREEMENT_STORAGE_KEY)
   agreementAccepted.value = false
   showAgreementModal.value = false
-  appStore.showWarning('未同意最新条款前，无法输入账号密码或使用快捷登录。')
+    appStore.showWarning('未同意最新条款前，无法输入登录密钥或使用快捷登录。')
 }
 
 // ==================== Turnstile Handlers ====================
@@ -430,8 +398,7 @@ function onTurnstileError(): void {
 
 function validateForm(): boolean {
   // Reset errors
-  errors.email = ''
-  errors.password = ''
+  errors.login_key = ''
   errors.turnstile = ''
 
   let isValid = true
@@ -444,21 +411,8 @@ function validateForm(): boolean {
     return false
   }
 
-  // Email validation
-  if (!formData.email.trim()) {
-    errors.email = t('auth.emailRequired')
-    isValid = false
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    errors.email = t('auth.invalidEmail')
-    isValid = false
-  }
-
-  // Password validation
-  if (!formData.password) {
-    errors.password = t('auth.passwordRequired')
-    isValid = false
-  } else if (formData.password.length < 6) {
-    errors.password = t('auth.passwordMinLength')
+  if (!formData.login_key.trim()) {
+    errors.login_key = t('auth.loginKeyRequired')
     isValid = false
   }
 
@@ -486,9 +440,8 @@ async function handleLogin(): Promise<void> {
 
   try {
     // Call auth store login
-    const response = await authStore.login({
-      email: formData.email,
-      password: formData.password,
+    const response = await authStore.keyLogin({
+      login_key: formData.login_key.trim(),
       remember_me: formData.remember_me,
       turnstile_token: turnstileEnabled.value ? turnstileToken.value : undefined
     })

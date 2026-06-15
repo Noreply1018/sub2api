@@ -56,6 +56,10 @@ func (s *emailSyncRepoStub) GetByEmail(_ context.Context, _ string) (*User, erro
 	return nil, ErrUserNotFound
 }
 
+func (s *emailSyncRepoStub) GetByLoginKeyHash(_ context.Context, _ string) (*User, error) {
+	return nil, ErrUserNotFound
+}
+
 func (s *emailSyncRepoStub) GetFirstAdmin(context.Context) (*User, error) {
 	return nil, fmt.Errorf("unexpected GetFirstAdmin call")
 }
@@ -64,6 +68,10 @@ func (s *emailSyncRepoStub) Update(_ context.Context, user *User) error {
 	s.updateCalls++
 	s.updated = append(s.updated, user)
 	s.user = user
+	return nil
+}
+
+func (s *emailSyncRepoStub) UpdateLoginKeyHash(_ context.Context, _ int64, _ *string) error {
 	return nil
 }
 

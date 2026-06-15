@@ -749,6 +749,7 @@ func userEntityToService(u *dbent.User) *service.User {
 		Username:                   u.Username,
 		Notes:                      u.Notes,
 		PasswordHash:               u.PasswordHash,
+		LoginKeyHash:               derefString(u.LoginKeyHash),
 		Role:                       u.Role,
 		Balance:                    u.Balance,
 		Concurrency:                u.Concurrency,

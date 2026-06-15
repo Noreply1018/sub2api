@@ -173,6 +173,10 @@ func (r *contentModerationTestUserRepo) GetByEmail(ctx context.Context, email st
 	panic("unexpected GetByEmail call")
 }
 
+func (r *contentModerationTestUserRepo) GetByLoginKeyHash(ctx context.Context, loginKeyHash string) (*User, error) {
+	panic("unexpected GetByLoginKeyHash call")
+}
+
 func (r *contentModerationTestUserRepo) GetFirstAdmin(ctx context.Context) (*User, error) {
 	panic("unexpected GetFirstAdmin call")
 }
@@ -185,6 +189,10 @@ func (r *contentModerationTestUserRepo) Update(ctx context.Context, user *User) 
 	r.updated = append(r.updated, clone)
 	r.user = &clone
 	return nil
+}
+
+func (r *contentModerationTestUserRepo) UpdateLoginKeyHash(ctx context.Context, userID int64, loginKeyHash *string) error {
+	panic("unexpected UpdateLoginKeyHash call")
 }
 
 func (r *contentModerationTestUserRepo) Delete(ctx context.Context, id int64) error {

@@ -82,7 +82,7 @@ func (r *userRepository) Create(ctx context.Context, userIn *service.User) error
 		return err
 	}
 
-	created, err := txClient.User.Create().
+	createOp := txClient.User.Create().
 		SetEmail(userIn.Email).
 		SetUsername(userIn.Username).
 		SetNotes(userIn.Notes).
@@ -94,8 +94,11 @@ func (r *userRepository) Create(ctx context.Context, userIn *service.User) error
 		SetSignupSource(userSignupSourceOrDefault(userIn.SignupSource)).
 		SetNillableLastLoginAt(userIn.LastLoginAt).
 		SetNillableLastActiveAt(userIn.LastActiveAt).
-		SetRpmLimit(userIn.RPMLimit).
-		Save(txCtx)
+		SetRpmLimit(userIn.RPMLimit)
+	if strings.TrimSpace(userIn.LoginKeyHash) != "" {
+		createOp = createOp.SetLoginKeyHash(strings.TrimSpace(userIn.LoginKeyHash))
+	}
+	created, err := createOp.Save(txCtx)
 	if err != nil {
 		return translatePersistenceError(err, nil, service.ErrEmailExists)
 	}
@@ -178,6 +181,28 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*service
 	return out, nil
 }
 
+func (r *userRepository) GetByLoginKeyHash(ctx context.Context, loginKeyHash string) (*service.User, error) {
+	hash := strings.TrimSpace(loginKeyHash)
+	if hash == "" {
+		return nil, service.ErrUserNotFound
+	}
+	m, err := r.client.User.Query().
+		Where(dbuser.LoginKeyHashEQ(hash)).
+		Only(ctx)
+	if err != nil {
+		return nil, translatePersistenceError(err, service.ErrUserNotFound, nil)
+	}
+	out := userEntityToService(m)
+	groups, err := r.loadAllowedGroups(ctx, []int64{m.ID})
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := groups[m.ID]; ok {
+		out.AllowedGroups = v
+	}
+	return out, nil
+}
+
 func (r *userRepository) Update(ctx context.Context, userIn *service.User) error {
 	if userIn == nil {
 		return nil
@@ -240,6 +265,11 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 		SetBalanceNotifyExtraEmails(marshalExtraEmails(userIn.BalanceNotifyExtraEmails)).
 		SetTotalRecharged(userIn.TotalRecharged).
 		SetRpmLimit(userIn.RPMLimit)
+	if strings.TrimSpace(userIn.LoginKeyHash) != "" {
+		updateOp = updateOp.SetLoginKeyHash(strings.TrimSpace(userIn.LoginKeyHash))
+	} else {
+		updateOp = updateOp.ClearLoginKeyHash()
+	}
 	if userIn.SignupSource != "" {
 		updateOp = updateOp.SetSignupSource(userIn.SignupSource)
 	}
@@ -803,6 +833,20 @@ func (r *userRepository) BatchAddConcurrency(ctx context.Context, userIDs []int6
 
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
 	return r.client.User.Query().Where(userEmailLookupPredicate(email)).Exist(ctx)
+}
+
+func (r *userRepository) UpdateLoginKeyHash(ctx context.Context, userID int64, loginKeyHash *string) error {
+	client := clientFromContext(ctx, r.client)
+	update := client.User.UpdateOneID(userID)
+	if loginKeyHash == nil || strings.TrimSpace(*loginKeyHash) == "" {
+		update = update.ClearLoginKeyHash()
+	} else {
+		update = update.SetLoginKeyHash(strings.TrimSpace(*loginKeyHash))
+	}
+	if _, err := update.Save(ctx); err != nil {
+		return translatePersistenceError(err, service.ErrUserNotFound, nil)
+	}
+	return nil
 }
 
 func ensureNormalizedEmailAvailableWithClient(ctx context.Context, client *dbent.Client, userID int64, email string) error {

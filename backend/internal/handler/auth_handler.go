@@ -77,6 +77,12 @@ type LoginRequest struct {
 	RememberMe     bool   `json:"remember_me"`
 }
 
+type KeyLoginRequest struct {
+	LoginKey       string `json:"login_key" binding:"required"`
+	TurnstileToken string `json:"turnstile_token"`
+	RememberMe     bool   `json:"remember_me"`
+}
+
 // AuthResponse 认证响应格式（匹配前端期望）
 type AuthResponse struct {
 	AccessToken  string    `json:"access_token"`
@@ -266,6 +272,48 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	h.authService.RecordSuccessfulLogin(c.Request.Context(), user.ID)
 
+	h.respondWithTokenPairWithRememberMe(c, user, req.RememberMe)
+}
+
+func (h *AuthHandler) KeyLogin(c *gin.Context) {
+	var req KeyLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	if err := h.authService.VerifyTurnstile(c.Request.Context(), req.TurnstileToken, ip.GetClientIP(c)); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	token, user, err := h.authService.LoginWithKey(c.Request.Context(), req.LoginKey)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	_ = token
+
+	if err := h.ensureBackendModeAllowsUser(c.Request.Context(), user); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	if h.totpService != nil && h.settingSvc.IsTotpEnabled(c.Request.Context()) && user.TotpEnabled {
+		tempToken, err := h.totpService.CreateLoginSession(c.Request.Context(), user.ID, user.Email)
+		if err != nil {
+			response.InternalError(c, "Failed to create 2FA session")
+			return
+		}
+		response.Success(c, TotpLoginResponse{
+			Requires2FA:     true,
+			TempToken:       tempToken,
+			UserEmailMasked: service.MaskEmail(user.Email),
+		})
+		return
+	}
+
+	h.authService.RecordSuccessfulLogin(c.Request.Context(), user.ID)
 	h.respondWithTokenPairWithRememberMe(c, user, req.RememberMe)
 }
 

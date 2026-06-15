@@ -104,6 +104,7 @@ export interface AdminUser extends User {
   // 管理员备注（普通用户接口不返回）
   notes: string
   last_used_at?: string | null
+  has_login_key?: boolean
   // 用户专属分组倍率配置 (group_id -> rate_multiplier)
   group_rates?: Record<number, number>
   // 当前并发数（仅管理员列表接口返回）
@@ -113,6 +114,12 @@ export interface AdminUser extends User {
 export interface LoginRequest {
   email: string
   password: string
+  turnstile_token?: string
+  remember_me?: boolean
+}
+
+export interface KeyLoginRequest {
+  login_key: string
   turnstile_token?: string
   remember_me?: boolean
 }

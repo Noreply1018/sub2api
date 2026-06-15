@@ -305,6 +305,12 @@
             </span>
           </template>
 
+          <template #cell-login_key="{ row }">
+            <span :class="['badge', row.has_login_key ? 'badge-green' : 'badge-gray']">
+              {{ row.has_login_key ? t('admin.users.loginKeySet') : t('admin.users.loginKeyNotSet') }}
+            </span>
+          </template>
+
           <template #cell-groups="{ row }">
             <div v-if="allGroups.length > 0" class="flex flex-col gap-1">
               <!-- 专属分组行 -->
@@ -662,6 +668,23 @@
                 {{ t('admin.users.groups') }}
               </button>
 
+              <button
+                @click="handleResetLoginKey(user); closeActionMenu()"
+                class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+              >
+                <Icon name="key" size="sm" class="text-gray-400" :stroke-width="2" />
+                {{ t('admin.users.resetLoginKey') }}
+              </button>
+
+              <button
+                v-if="user.has_login_key"
+                @click="handleClearLoginKey(user); closeActionMenu()"
+                class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+              >
+                <Icon name="x" size="sm" class="text-gray-400" :stroke-width="2" />
+                {{ t('admin.users.clearLoginKey') }}
+              </button>
+
               <div v-if="!authStore.hidesBillingUi" class="my-1 border-t border-gray-100 dark:border-dark-700"></div>
 
               <!-- Deposit -->
@@ -723,6 +746,40 @@
     </Teleport>
 
     <ConfirmDialog :show="showDeleteDialog" :title="t('admin.users.deleteUser')" :message="t('admin.users.deleteConfirm', { email: deletingUser?.email })" :danger="true" @confirm="confirmDelete" @cancel="showDeleteDialog = false" />
+    <Teleport to="body">
+      <div
+        v-if="showLoginKeyDialog"
+        class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4"
+        @click.self="closeLoginKeyDialog"
+      >
+        <div class="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl dark:bg-dark-800">
+          <div class="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t('admin.users.loginKeyOneTimeTitle') }}
+              </h3>
+              <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+                {{ t('admin.users.loginKeyOneTimeHint') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-dark-700 dark:hover:text-white"
+              @click="closeLoginKeyDialog"
+            >
+              <Icon name="x" size="sm" />
+            </button>
+          </div>
+          <div class="flex items-center gap-2 rounded border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-900">
+            <code class="min-w-0 flex-1 break-all text-sm text-gray-900 dark:text-white">{{ generatedLoginKey }}</code>
+            <button class="btn btn-secondary shrink-0" type="button" @click="copyGeneratedLoginKey">
+              <Icon name="copy" size="sm" class="mr-1" />
+              {{ t('common.copy') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
     <UserCreateModal :show="showCreateModal" @close="showCreateModal = false" @success="loadUsers" />
     <UserEditModal :show="showEditModal" :user="editingUser" @close="closeEditModal" @success="loadUsers" />
     <UserPlatformQuotaModal
@@ -746,6 +803,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { useClipboard } from '@/composables/useClipboard'
 import { formatDateTime } from '@/utils/format'
 import Icon from '@/components/icons/Icon.vue'
 
@@ -779,6 +837,7 @@ import GroupReplaceModal from '@/components/admin/user/GroupReplaceModal.vue'
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const { copyToClipboard } = useClipboard()
 
 // Generate dynamic attribute columns from enabled definitions
 const attributeColumns = computed<Column[]>(() =>
@@ -835,6 +894,7 @@ const allColumns = computed<Column[]>(() => {
     { key: 'notes', label: t('admin.users.columns.notes'), sortable: false },
     ...attributeColumns.value,
     { key: 'role', label: t('admin.users.columns.role'), sortable: true },
+    { key: 'login_key', label: t('admin.users.columns.loginKey'), sortable: false },
     { key: 'groups', label: t('admin.users.columns.groups'), sortable: false },
     { key: 'subscriptions', label: t('admin.users.columns.subscriptions'), sortable: false },
   ]
@@ -871,7 +931,7 @@ const hiddenColumns = reactive<Set<string>>(new Set())
 
 // Default hidden columns (columns hidden by default on first load)
 const DEFAULT_HIDDEN_COLUMNS = [
-  'notes', 'groups', 'subscriptions', 'usage', 'concurrency',
+  'notes', 'login_key', 'groups', 'subscriptions', 'usage', 'concurrency',
   'usage_anthropic', 'usage_openai', 'usage_gemini', 'usage_antigravity',
   'balance_platform_quota'
 ]
@@ -1248,10 +1308,12 @@ const showDeleteDialog = ref(false)
 const showApiKeysModal = ref(false)
 const showAttributesModal = ref(false)
 const showPlatformQuotaModal = ref(false)
+const showLoginKeyDialog = ref(false)
 const editingUser = ref<AdminUser | null>(null)
 const deletingUser = ref<AdminUser | null>(null)
 const viewingUser = ref<AdminUser | null>(null)
 const platformQuotaUser = ref<AdminUser | null>(null)
+const generatedLoginKey = ref('')
 
 const handlePlatformQuota = (user: AdminUser) => {
   platformQuotaUser.value = user
@@ -1365,7 +1427,7 @@ const openActionMenu = (user: AdminUser, e: MouseEvent) => {
 
     const rect = target.getBoundingClientRect()
     const menuWidth = 200
-    const menuHeight = 240
+    const menuHeight = 320
     const padding = 8
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
@@ -1665,6 +1727,39 @@ const handleAllowedGroups = (user: AdminUser) => {
 const closeAllowedGroupsModal = () => {
   showAllowedGroupsModal.value = false
   allowedGroupsUser.value = null
+}
+
+const handleResetLoginKey = async (user: AdminUser) => {
+  try {
+    const result = await adminAPI.users.resetLoginKey(user.id)
+    generatedLoginKey.value = result.login_key
+    showLoginKeyDialog.value = true
+    appStore.showSuccess(t('admin.users.loginKeyResetSuccess'))
+    loadUsers()
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('admin.users.loginKeyActionFailed'))
+    console.error('Error resetting login key:', error)
+  }
+}
+
+const handleClearLoginKey = async (user: AdminUser) => {
+  try {
+    await adminAPI.users.clearLoginKey(user.id)
+    appStore.showSuccess(t('admin.users.loginKeyClearSuccess'))
+    loadUsers()
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('admin.users.loginKeyActionFailed'))
+    console.error('Error clearing login key:', error)
+  }
+}
+
+const closeLoginKeyDialog = () => {
+  showLoginKeyDialog.value = false
+  generatedLoginKey.value = ''
+}
+
+const copyGeneratedLoginKey = async () => {
+  await copyToClipboard(generatedLoginKey.value)
 }
 
 const openGroupReplace = (user: AdminUser, group: { id: number; name: string }) => {

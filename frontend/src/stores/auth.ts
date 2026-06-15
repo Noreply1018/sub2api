@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import { authAPI, isTotp2FARequired, type LoginResponse } from '@/api'
-import type { User, LoginRequest, RegisterRequest, AuthResponse, TotpLogin2FARequest, RunMode } from '@/types'
+import type { User, LoginRequest, KeyLoginRequest, RegisterRequest, AuthResponse, TotpLogin2FARequest, RunMode } from '@/types'
 
 const AUTH_TOKEN_KEY = 'auth_token'
 const AUTH_USER_KEY = 'auth_user'
@@ -259,6 +259,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function keyLogin(credentials: KeyLoginRequest): Promise<LoginResponse> {
+    try {
+      const response = await authAPI.keyLogin(credentials)
+
+      if (isTotp2FARequired(response)) {
+        return response
+      }
+
+      setAuthFromResponse(response)
+
+      return response
+    } catch (error) {
+      clearAuth({ preservePendingAuthSession: pendingAuthSession.value !== null })
+      throw error
+    }
+  }
+
   /**
    * Complete login with 2FA code
    * @param tempToken - Temporary token from initial login
@@ -492,6 +509,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     login,
+    keyLogin,
     login2FA,
     register,
     setToken,

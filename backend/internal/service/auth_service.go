@@ -25,6 +25,7 @@ import (
 
 var (
 	ErrInvalidCredentials      = infraerrors.Unauthorized("INVALID_CREDENTIALS", "invalid email or password")
+	ErrInvalidLoginKey         = infraerrors.Unauthorized("INVALID_CREDENTIALS", "invalid login key")
 	ErrUserNotActive           = infraerrors.Forbidden("USER_NOT_ACTIVE", "user is not active")
 	ErrEmailExists             = infraerrors.Conflict("EMAIL_EXISTS", "email already exists")
 	ErrEmailReserved           = infraerrors.BadRequest("EMAIL_RESERVED", "email is reserved")
@@ -465,6 +466,29 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 		return "", nil, fmt.Errorf("generate token: %w", err)
 	}
 
+	return token, user, nil
+}
+
+func (s *AuthService) LoginWithKey(ctx context.Context, loginKey string) (string, *User, error) {
+	loginKeyHash := HashLoginKey(loginKey)
+	if loginKeyHash == "" {
+		return "", nil, ErrInvalidLoginKey
+	}
+	user, err := s.userRepo.GetByLoginKeyHash(ctx, loginKeyHash)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return "", nil, ErrInvalidLoginKey
+		}
+		logger.LegacyPrintf("service.auth", "[Auth] Database error during key login: %v", err)
+		return "", nil, ErrServiceUnavailable
+	}
+	if !user.IsActive() {
+		return "", nil, ErrUserNotActive
+	}
+	token, err := s.GenerateToken(user)
+	if err != nil {
+		return "", nil, fmt.Errorf("generate token: %w", err)
+	}
 	return token, user, nil
 }
 
@@ -1200,6 +1224,15 @@ func (s *AuthService) HashPassword(password string) (string, error) {
 func (s *AuthService) CheckPassword(password, hashedPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+func HashLoginKey(loginKey string) string {
+	normalized := strings.TrimSpace(loginKey)
+	if normalized == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(normalized))
+	return hex.EncodeToString(sum[:])
 }
 
 // RefreshToken 刷新token

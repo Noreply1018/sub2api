@@ -105,7 +105,10 @@ func (m *mockUserRepo) GetByID(ctx context.Context, _ int64) (*User, error) {
 	return &User{}, nil
 }
 func (m *mockUserRepo) GetByEmail(context.Context, string) (*User, error) { return &User{}, nil }
-func (m *mockUserRepo) GetFirstAdmin(context.Context) (*User, error)      { return &User{}, nil }
+func (m *mockUserRepo) GetByLoginKeyHash(context.Context, string) (*User, error) {
+	return &User{}, nil
+}
+func (m *mockUserRepo) GetFirstAdmin(context.Context) (*User, error) { return &User{}, nil }
 func (m *mockUserRepo) Update(ctx context.Context, user *User) error {
 	m.updateCalls++
 	if m.updateFn != nil {
@@ -113,7 +116,8 @@ func (m *mockUserRepo) Update(ctx context.Context, user *User) error {
 	}
 	return nil
 }
-func (m *mockUserRepo) Delete(context.Context, int64) error { return nil }
+func (m *mockUserRepo) UpdateLoginKeyHash(context.Context, int64, *string) error { return nil }
+func (m *mockUserRepo) Delete(context.Context, int64) error                      { return nil }
 func (m *mockUserRepo) GetUserAvatar(ctx context.Context, userID int64) (*UserAvatar, error) {
 	if m.getAvatarFn != nil {
 		return m.getAvatarFn(ctx, userID)

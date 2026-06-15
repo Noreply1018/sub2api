@@ -80,6 +80,11 @@ func PasswordHash(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPasswordHash, v))
 }
 
+// LoginKeyHash applies equality check predicate on the "login_key_hash" field. It's identical to LoginKeyHashEQ.
+func LoginKeyHash(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLoginKeyHash, v))
+}
+
 // Role applies equality check predicate on the "role" field. It's identical to RoleEQ.
 func Role(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldRole, v))
@@ -428,6 +433,81 @@ func PasswordHashEqualFold(v string) predicate.User {
 // PasswordHashContainsFold applies the ContainsFold predicate on the "password_hash" field.
 func PasswordHashContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldPasswordHash, v))
+}
+
+// LoginKeyHashEQ applies the EQ predicate on the "login_key_hash" field.
+func LoginKeyHashEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashNEQ applies the NEQ predicate on the "login_key_hash" field.
+func LoginKeyHashNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashIn applies the In predicate on the "login_key_hash" field.
+func LoginKeyHashIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldLoginKeyHash, vs...))
+}
+
+// LoginKeyHashNotIn applies the NotIn predicate on the "login_key_hash" field.
+func LoginKeyHashNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldLoginKeyHash, vs...))
+}
+
+// LoginKeyHashGT applies the GT predicate on the "login_key_hash" field.
+func LoginKeyHashGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashGTE applies the GTE predicate on the "login_key_hash" field.
+func LoginKeyHashGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashLT applies the LT predicate on the "login_key_hash" field.
+func LoginKeyHashLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashLTE applies the LTE predicate on the "login_key_hash" field.
+func LoginKeyHashLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashContains applies the Contains predicate on the "login_key_hash" field.
+func LoginKeyHashContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashHasPrefix applies the HasPrefix predicate on the "login_key_hash" field.
+func LoginKeyHashHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashHasSuffix applies the HasSuffix predicate on the "login_key_hash" field.
+func LoginKeyHashHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashIsNil applies the IsNil predicate on the "login_key_hash" field.
+func LoginKeyHashIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLoginKeyHash))
+}
+
+// LoginKeyHashNotNil applies the NotNil predicate on the "login_key_hash" field.
+func LoginKeyHashNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLoginKeyHash))
+}
+
+// LoginKeyHashEqualFold applies the EqualFold predicate on the "login_key_hash" field.
+func LoginKeyHashEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldLoginKeyHash, v))
+}
+
+// LoginKeyHashContainsFold applies the ContainsFold predicate on the "login_key_hash" field.
+func LoginKeyHashContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldLoginKeyHash, v))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.

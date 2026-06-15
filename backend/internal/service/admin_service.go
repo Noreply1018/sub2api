@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +38,8 @@ type AdminService interface {
 	GetUserIncludeDeleted(ctx context.Context, id int64) (*User, error)
 	CreateUser(ctx context.Context, input *CreateUserInput) (*User, error)
 	UpdateUser(ctx context.Context, id int64, input *UpdateUserInput) (*User, error)
+	ResetUserLoginKey(ctx context.Context, id int64) (*UserLoginKeyResetResult, error)
+	ClearUserLoginKey(ctx context.Context, id int64) (*User, error)
 	DeleteUser(ctx context.Context, id int64) error
 	UpdateUserBalance(ctx context.Context, userID int64, balance float64, operation string, notes string) (*User, error)
 	BatchUpdateConcurrency(ctx context.Context, userIDs []int64, value int, mode string) (int, error)
@@ -152,6 +156,11 @@ type UpdateUserInput struct {
 	// GroupRates 用户专属分组倍率配置
 	// map[groupID]*rate，nil 表示删除该分组的专属倍率
 	GroupRates map[int64]*float64
+}
+
+type UserLoginKeyResetResult struct {
+	User     *User
+	LoginKey string
 }
 
 type AdminBindAuthIdentityInput struct {
@@ -836,6 +845,46 @@ func (s *adminServiceImpl) UpdateUser(ctx context.Context, id int64, input *Upda
 	}
 
 	return user, nil
+}
+
+func (s *adminServiceImpl) ResetUserLoginKey(ctx context.Context, id int64) (*UserLoginKeyResetResult, error) {
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	loginKey, err := generateLoginKey()
+	if err != nil {
+		return nil, err
+	}
+	hash := HashLoginKey(loginKey)
+	if err := s.userRepo.UpdateLoginKeyHash(ctx, id, &hash); err != nil {
+		return nil, err
+	}
+	user.LoginKeyHash = hash
+	return &UserLoginKeyResetResult{
+		User:     user,
+		LoginKey: loginKey,
+	}, nil
+}
+
+func (s *adminServiceImpl) ClearUserLoginKey(ctx context.Context, id int64) (*User, error) {
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.userRepo.UpdateLoginKeyHash(ctx, id, nil); err != nil {
+		return nil, err
+	}
+	user.LoginKeyHash = ""
+	return user, nil
+}
+
+func generateLoginKey() (string, error) {
+	var raw [32]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		return "", err
+	}
+	return "lk_" + base64.RawURLEncoding.EncodeToString(raw[:]), nil
 }
 
 func sameInt64Set(a, b []int64) bool {

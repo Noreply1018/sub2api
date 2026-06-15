@@ -6,6 +6,7 @@
 import { apiClient } from './client'
 import type {
   LoginRequest,
+  KeyLoginRequest,
   RegisterRequest,
   AuthResponse,
   CurrentUserResponse,
@@ -92,6 +93,23 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
 
   // Only store token if 2FA is not required
+  if (!isTotp2FARequired(data)) {
+    setAuthToken(data.access_token)
+    if (data.refresh_token) {
+      setRefreshToken(data.refresh_token)
+    }
+    if (data.expires_in) {
+      setTokenExpiresAt(data.expires_in)
+    }
+    localStorage.setItem('auth_user', JSON.stringify(data.user))
+  }
+
+  return data
+}
+
+export async function keyLogin(credentials: KeyLoginRequest): Promise<LoginResponse> {
+  const { data } = await apiClient.post<LoginResponse>('/auth/key-login', credentials)
+
   if (!isTotp2FARequired(data)) {
     setAuthToken(data.access_token)
     if (data.refresh_token) {
@@ -659,6 +677,7 @@ export async function exchangePendingOAuthCompletion(
 
 export const authAPI = {
   login,
+  keyLogin,
   login2FA,
   isTotp2FARequired,
   register,

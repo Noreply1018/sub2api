@@ -44,6 +44,11 @@ export interface AdminBoundAuthIdentity {
   channel?: AdminBoundAuthIdentityChannel | null
 }
 
+export interface ResetLoginKeyResponse {
+  user: AdminUser
+  login_key: string
+}
+
 /**
  * List all users with pagination
  * @param page - Page number (default: 1)
@@ -136,6 +141,16 @@ export async function create(userData: {
  */
 export async function update(id: number, updates: UpdateUserRequest): Promise<AdminUser> {
   const { data } = await apiClient.put<AdminUser>(`/admin/users/${id}`, updates)
+  return data
+}
+
+export async function resetLoginKey(id: number): Promise<ResetLoginKeyResponse> {
+  const { data } = await apiClient.post<ResetLoginKeyResponse>(`/admin/users/${id}/login-key/reset`)
+  return data
+}
+
+export async function clearLoginKey(id: number): Promise<AdminUser> {
+  const { data } = await apiClient.delete<AdminUser>(`/admin/users/${id}/login-key`)
   return data
 }
 
@@ -379,6 +394,8 @@ export const usersAPI = {
   getById,
   create,
   update,
+  resetLoginKey,
+  clearLoginKey,
   delete: deleteUser,
   updateBalance,
   updateConcurrency,
